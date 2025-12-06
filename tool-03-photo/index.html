@@ -3,21 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>プリクラ風フォトエディター V5 (カスタム画像対応)</title>
+    <title>スタカネ デコりメーカー</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
+                        sans: ['"M PLUS Rounded 1c"', 'sans-serif'],
+                    },
+                    colors: {
+                        pastel: {
+                            yellow: '#fef3c7', // bg-yellow-100 equivalent
+                            main: '#fcd34d',   // yellow-300
+                            dark: '#d97706',   // yellow-600
+                            pink: '#f9a8d4',
+                            blue: '#93c5fd',
+                            green: '#86efac',
+                        }
                     },
                     animation: {
-                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'bounce-slight': 'bounceSlight 2s infinite',
+                        'fade-in': 'fadeIn 0.4s ease-out',
+                        'pop-in': 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                     },
                     keyframes: {
+                        bounceSlight: {
+                            '0%, 100%': { transform: 'translateY(-3%)' },
+                            '50%': { transform: 'translateY(0)' },
+                        },
                         fadeIn: {
-                            '0%': { opacity: '0', transform: 'scale(0.95)' },
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        popIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.8)' },
                             '100%': { opacity: '1', transform: 'scale(1)' },
                         }
                     }
@@ -26,6 +50,14 @@
         }
     </script>
     <style>
+        body {
+            /* パステルカラーの背景パターン */
+            background-color: #fffbeb;
+            background-image: radial-gradient(#fde68a 15%, transparent 16%), radial-gradient(#fde68a 15%, transparent 16%);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+        }
+
         /* キャンバスエリア - 16:9 */
         #canvas-container {
             width: 100%;
@@ -34,14 +66,14 @@
             aspect-ratio: 16 / 9;
             position: relative;
             overflow: hidden;
-            border: 2px solid #818cf8;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            background-color: #f3f4f6;
-            /* 透明背景を表す市松模様 */
+            border: 6px solid #fcd34d; /* パステルイエローの枠 */
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(251, 191, 36, 0.4);
+            background-color: #ffffff;
+            /* 透明背景を表す市松模様（薄く） */
             background-image: 
-                linear-gradient(45deg, #e5e7eb 25%, transparent 25%, transparent 75%, #e5e7eb 75%, #e5e7eb),
-                linear-gradient(45deg, #e5e7eb 25%, transparent 25%, transparent 75%, #e5e7eb 75%, #e5e7eb);
+                linear-gradient(45deg, #fff 25%, #fefce8 25%, #fefce8 75%, #fff 75%, #fff),
+                linear-gradient(45deg, #fff 25%, #fefce8 25%, #fefce8 75%, #fff 75%, #fff);
             background-size: 20px 20px;
             background-position: 0 0, 10px 10px;
         }
@@ -56,14 +88,8 @@
         #photoCanvas:active {
             cursor: grabbing;
         }
-        /* トリミングモーダル用のスタイル */
-        #trimming-canvas {
-            border: 2px dashed #6366f1;
-            background-color: #f3f4f6;
-            cursor: move;
-        }
-
-        /* スライダーカスタマイズ */
+        
+        /* スライダーカスタマイズ（可愛く） */
         input[type=range] {
             -webkit-appearance: none;
             width: 100%;
@@ -71,56 +97,67 @@
         }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 20px;
-            width: 20px;
+            height: 24px;
+            width: 24px;
             border-radius: 50%;
-            background: #6366f1;
+            background: #fcd34d;
+            border: 3px solid #fff;
             cursor: pointer;
             margin-top: -8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
-            height: 4px;
+            height: 8px;
             cursor: pointer;
-            background: #c7c7cc;
-            border-radius: 2px;
+            background: #fef3c7;
+            border-radius: 4px;
+            border: 1px solid #fde68a;
         }
         
-        /* カスタムファイル入力ボタンのスタイル */
-        .custom-file-upload {
-            display: inline-block;
-            cursor: pointer;
+        /* ボタンのアニメーション */
+        .btn-hover-pop:hover {
+            transform: scale(1.05);
+        }
+        .btn-hover-pop:active {
+            transform: scale(0.95);
+        }
+
+        /* タブのアクティブスタイル上書き */
+        .tab-btn.active {
+            background-color: #fcd34d !important;
+            color: #78350f !important; /* amber-900 */
+            border: none !important;
+            box-shadow: 0 4px 6px -1px rgba(251, 191, 36, 0.3);
+            transform: translateY(-2px);
         }
     </style>
 </head>
-<body class="bg-indigo-50 min-h-screen py-6 font-sans text-gray-800">
+<body class="min-h-screen py-8 text-amber-900">
 
-    <!-- トリミングモーダル -->
-    <div id="trimming-modal" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-90 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 animate-fade-in flex flex-col max-h-[90vh]">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                位置とサイズを調整 (16:9)
+    <div id="trimming-modal" class="fixed inset-0 z-50 bg-amber-100 bg-opacity-90 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl shadow-xl w-full max-w-2xl p-6 animate-pop-in flex flex-col max-h-[90vh] border-4 border-yellow-200">
+            <h2 class="text-2xl font-bold text-amber-500 mb-4 flex items-center justify-center gap-2">
+                ✂️ 位置とサイズを調整 (16:9)
             </h2>
             
-            <div class="flex-1 min-h-0 flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden relative mb-4">
-                <canvas id="trimming-canvas"></canvas>
+            <div class="flex-1 min-h-0 flex items-center justify-center bg-gray-50 rounded-2xl overflow-hidden relative mb-6 border-2 border-dashed border-gray-300">
+                <canvas id="trimming-canvas" class="cursor-move"></canvas>
             </div>
 
-            <div class="space-y-4">
+            <div class="space-y-6 bg-yellow-50 p-4 rounded-2xl">
                 <div class="flex items-center gap-4">
-                    <span class="text-sm font-bold text-gray-500 w-12">倍率</span>
-                    <span class="text-lg">🔍</span>
+                    <span class="text-sm font-bold text-amber-600 w-12">ズーム</span>
+                    <span class="text-xl">🔍</span>
                     <input type="range" id="trim-scale-slider" min="0.1" max="3.0" step="0.01" value="1.0">
                 </div>
                 
-                <div class="flex gap-3">
-                    <button onclick="cancelTrimming()" class="flex-1 py-3 px-4 rounded-lg border border-gray-300 font-bold text-gray-600 hover:bg-gray-50 transition">
-                        キャンセル
+                <div class="flex gap-4">
+                    <button onclick="cancelTrimming()" class="flex-1 py-3 px-4 rounded-xl border-2 border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition">
+                        やめる
                     </button>
-                    <button onclick="applyTrimming()" class="flex-1 py-3 px-4 rounded-lg bg-indigo-600 font-bold text-white hover:bg-indigo-700 shadow-md transition">
-                        決定する
+                    <button onclick="applyTrimming()" class="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-yellow-400 to-orange-400 font-bold text-white hover:from-yellow-500 hover:to-orange-500 shadow-md transition btn-hover-pop">
+                        決定！
                     </button>
                 </div>
             </div>
@@ -128,134 +165,151 @@
     </div>
 
     <div class="max-w-4xl mx-auto px-4">
-        <header class="text-center mb-6">
-            <h1 class="text-3xl font-extrabold text-indigo-600 tracking-tight">✨ プリクラメーカー V5 ✨</h1>
-            <p class="text-sm text-gray-500 mt-2">自作のフレームやスタンプ画像も使えます！</p>
+        <header class="text-center mb-8 relative">
+            <div class="inline-block relative">
+                <h1 class="text-4xl md:text-5xl font-extrabold text-yellow-500 tracking-tight drop-shadow-sm mb-2" style="text-shadow: 2px 2px 0px #fff;">
+                    🎨 スタカネ デコりメーカー 🎉
+                </h1>
+                <span class="absolute -top-6 -right-6 text-4xl animate-bounce-slight">✨</span>
+            </div>
+            <p class="text-amber-600/80 font-bold mt-2 text-lg">フレームやスタンプでもっと盛り上げよう！</p>
         </header>
 
-        <!-- メインキャンバスエリア -->
-        <div id="canvas-container" class="mb-6 bg-white shadow-xl">
-            <!-- 800x450 (16:9) -->
+        <div id="canvas-container" class="mb-8">
             <canvas id="photoCanvas" width="800" height="450"></canvas>
             
-            <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-6 pointer-events-none">
-                <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-6 pointer-events-none bg-white/50 backdrop-blur-sm">
+                <div class="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mb-4 border-4 border-yellow-200 animate-pulse">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 16m-2-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
-                <p class="text-lg font-bold text-gray-500">写真をアップロード</p>
+                <p class="text-xl font-bold text-amber-400 drop-shadow-sm">写真をえらんでね！</p>
             </div>
         </div>
 
-        <!-- オブジェクト調整パネル -->
-        <div id="adjustment-panel" class="hidden bg-white p-4 rounded-xl shadow-lg border-2 border-indigo-100 mb-6 animate-fade-in">
+        <div id="adjustment-panel" class="hidden bg-white/90 backdrop-blur p-4 rounded-3xl shadow-lg border-2 border-yellow-200 mb-6 animate-pop-in">
             <div class="flex justify-between items-center mb-3">
-                <h3 class="text-indigo-600 font-bold flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    調整
+                <h3 class="text-amber-500 font-bold flex items-center gap-2">
+                    <span class="bg-amber-100 p-1 rounded-md">🛠️</span> 調整
                 </h3>
-                <button onclick="deleteSelectedObject()" class="text-red-500 hover:text-red-700 font-bold text-sm px-3 py-1 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 transition">削除 🗑️</button>
+                <button onclick="deleteSelectedObject()" class="text-white font-bold text-xs px-4 py-2 bg-red-400 rounded-full hover:bg-red-500 transition shadow-sm btn-hover-pop">削除する 🗑️</button>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-amber-50 p-4 rounded-2xl">
                 <div class="flex items-center gap-4">
-                    <span class="text-sm font-medium text-gray-600 w-12">大きさ</span>
+                    <span class="text-sm font-bold text-amber-700 w-12">大きさ</span>
                     <input type="range" id="scale-slider" min="0.2" max="3.0" step="0.05" value="1.0" oninput="updateObjectProperty('scale', this.value)">
                 </div>
                 <div class="flex items-center gap-4">
-                    <span class="text-sm font-medium text-gray-600 w-12">角度</span>
+                    <span class="text-sm font-bold text-amber-700 w-12">かたむき</span>
                     <input type="range" id="rotation-slider" min="-180" max="180" step="1" value="0" oninput="updateObjectProperty('rotation', this.value)">
                 </div>
             </div>
         </div>
 
-        <!-- コントロールパネル -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div class="flex overflow-x-auto bg-gray-50 border-b border-gray-100">
-                <button onclick="switchTab('upload')" class="tab-btn active px-6 py-4 font-bold text-sm text-gray-500 hover:bg-gray-100 focus:outline-none whitespace-nowrap" data-tab="upload">📁 写真</button>
-                <button onclick="switchTab('frame')" class="tab-btn px-6 py-4 font-bold text-sm text-gray-500 hover:bg-gray-100 focus:outline-none whitespace-nowrap" data-tab="frame">🖼️ フレーム</button>
-                <button onclick="switchTab('sticker')" class="tab-btn px-6 py-4 font-bold text-sm text-gray-500 hover:bg-gray-100 focus:outline-none whitespace-nowrap" data-tab="sticker">✨ スタンプ</button>
-                <button onclick="switchTab('text')" class="tab-btn px-6 py-4 font-bold text-sm text-gray-500 hover:bg-gray-100 focus:outline-none whitespace-nowrap" data-tab="text">✏️ 文字</button>
+        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-yellow-100">
+            <div class="flex overflow-x-auto bg-amber-50 p-3 gap-2">
+                <button onclick="switchTab('upload')" class="tab-btn active flex-1 py-3 px-4 rounded-2xl font-bold text-amber-700/60 hover:bg-amber-100 focus:outline-none whitespace-nowrap transition-all duration-200" data-tab="upload">📁 写真</button>
+                <button onclick="switchTab('frame')" class="tab-btn flex-1 py-3 px-4 rounded-2xl font-bold text-amber-700/60 hover:bg-amber-100 focus:outline-none whitespace-nowrap transition-all duration-200" data-tab="frame">🖼️ フレーム</button>
+                <button onclick="switchTab('sticker')" class="tab-btn flex-1 py-3 px-4 rounded-2xl font-bold text-amber-700/60 hover:bg-amber-100 focus:outline-none whitespace-nowrap transition-all duration-200" data-tab="sticker">✨ スタンプ</button>
+                <button onclick="switchTab('text')" class="tab-btn flex-1 py-3 px-4 rounded-2xl font-bold text-amber-700/60 hover:bg-amber-100 focus:outline-none whitespace-nowrap transition-all duration-200" data-tab="text">✏️ もじ</button>
             </div>
 
-            <div class="p-6">
-                <!-- 写真タブ -->
-                <div id="tab-upload" class="tab-content block">
-                    <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 bg-gray-50 hover:bg-gray-100 transition relative">
-                        <input type="file" id="photoInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                        <svg class="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        <span class="text-indigo-500 font-bold">ここをタップして写真を選択</span>
+            <div class="p-6 min-h-[250px] bg-white">
+                <div id="tab-upload" class="tab-content block animate-fade-in">
+                    <div class="flex flex-col items-center justify-center border-4 border-dashed border-yellow-200 rounded-3xl p-10 bg-yellow-50 hover:bg-yellow-100 transition relative group cursor-pointer">
+                        <input type="file" id="photoInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                        <div class="bg-white p-4 rounded-full shadow-md mb-4 group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-12 h-12 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        </div>
+                        <span class="text-amber-500 font-bold text-lg">ここをタップして写真を選択</span>
+                        <p class="text-amber-400 text-sm mt-2">カメラロールから選んでね</p>
                     </div>
                 </div>
 
-                <!-- フレームタブ -->
-                <div id="tab-frame" class="tab-content hidden">
-                    <div class="mb-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-                        <label class="block text-indigo-700 font-bold mb-2 text-sm">📁 オリジナルフレーム (PNG推奨)</label>
-                        <input type="file" id="customFrameInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200"/>
-                        <p class="text-xs text-gray-500 mt-1">※中央が透明なPNG画像を選ぶと綺麗に合成できます。</p>
+                <div id="tab-frame" class="tab-content hidden animate-fade-in">
+                    <div class="mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                        <label class="block text-blue-600 font-bold mb-2 text-sm flex items-center gap-2">
+                            <span>📁</span> オリジナルフレームを使う
+                        </label>
+                        <input type="file" id="customFrameInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-100 file:text-blue-600 hover:file:bg-blue-200 cursor-pointer"/>
+                        <p class="text-xs text-blue-400 mt-2 pl-2">※真ん中が透明なPNG画像を使ってね</p>
                     </div>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="frame-grid">
-                        <!-- フレーム画像はJavaScriptで動的に追加 -->
-                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="frame-grid">
+                        </div>
                 </div>
 
-                <!-- スタンプタブ -->
-                <div id="tab-sticker" class="tab-content hidden">
-                    <div class="mb-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-                        <label class="block text-indigo-700 font-bold mb-2 text-sm">📁 オリジナルスタンプを追加</label>
-                        <input type="file" id="customStickerInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200"/>
+                <div id="tab-sticker" class="tab-content hidden animate-fade-in">
+                    <div class="mb-6 p-4 bg-pink-50 rounded-2xl border border-pink-100">
+                        <label class="block text-pink-600 font-bold mb-2 text-sm flex items-center gap-2">
+                            <span>📁</span> 画像をスタンプにする
+                        </label>
+                        <input type="file" id="customStickerInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-pink-100 file:text-pink-600 hover:file:bg-pink-200 cursor-pointer"/>
                     </div>
 
+                    <h4 class="text-sm font-bold text-gray-400 mb-3 ml-1">絵文字スタンプ</h4>
                     <div class="flex flex-wrap gap-3">
-                        <button onclick="addSticker('💖')" class="text-4xl p-2 hover:bg-gray-100 rounded-lg transition transform hover:scale-125">💖</button>
-                        <button onclick="addSticker('✨')" class="text-4xl p-2 hover:bg-gray-100 rounded-lg transition transform hover:scale-125">✨</button>
-                        <button onclick="addSticker('⭐')" class="text-4xl p-2 hover:bg-gray-100 rounded-lg transition transform hover:scale-125">⭐</button>
-                        <button onclick="addSticker('🎉')" class="text-4xl p-2 hover:bg-gray-100 rounded-lg transition transform hover:scale-125">🎉</button>
-                        <button onclick="addSticker('🌸')" class="text-4xl p-2 hover:bg-gray-100 rounded-lg transition transform hover:scale-125">🌸</button>
-                        <button onclick="addSticker('🎀')" class="text-4xl p-2 hover:bg-gray-100 rounded-lg transition transform hover:scale-125">🎀</button>
-                        <button onclick="addSticker('👑')" class="text-4xl p-2 hover:bg-gray-100 rounded-lg transition transform hover:scale-125">👑</button>
-                        <button onclick="addSticker('🦋')" class="text-4xl p-2 hover:bg-gray-100 rounded-lg transition transform hover:scale-125">🦋</button>
-                        <button onclick="addSticker('🐱')" class="text-4xl p-2 hover:bg-gray-100 rounded-lg transition transform hover:scale-125">🐱</button>
-                        <button onclick="addSticker('🐶')" class="text-4xl p-2 hover:bg-gray-100 rounded-lg transition transform hover:scale-125">🐶</button>
-                        <button onclick="addSticker('😎')" class="text-4xl p-2 hover:bg-gray-100 rounded-lg transition transform hover:scale-125">😎</button>
-                        <button onclick="addSticker('🎂')" class="text-4xl p-2 hover:bg-gray-100 rounded-lg transition transform hover:scale-125">🎂</button>
+                        <button onclick="addSticker('💖')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">💖</button>
+                        <button onclick="addSticker('✨')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">✨</button>
+                        <button onclick="addSticker('⭐')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">⭐</button>
+                        <button onclick="addSticker('🎉')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">🎉</button>
+                        <button onclick="addSticker('🌸')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">🌸</button>
+                        <button onclick="addSticker('🎀')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">🎀</button>
+                        <button onclick="addSticker('👑')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">👑</button>
+                        <button onclick="addSticker('🦋')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">🦋</button>
+                        <button onclick="addSticker('🐱')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">🐱</button>
+                        <button onclick="addSticker('🐶')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">🐶</button>
+                        <button onclick="addSticker('😎')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">😎</button>
+                        <button onclick="addSticker('🎂')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">🎂</button>
                     </div>
                 </div>
 
-                <!-- 文字タブ -->
-                <div id="tab-text" class="tab-content hidden">
-                    <div class="space-y-4">
-                        <input type="text" id="text-input" placeholder="文字を入力してね" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition">
-                        <div class="flex gap-4">
-                            <div class="flex-1">
-                                <label class="text-xs text-gray-500 font-bold block mb-1">カラー</label>
-                                <div class="flex gap-2 overflow-x-auto pb-2">
-                                    <button onclick="setTextColor('#000000')" class="w-8 h-8 rounded-full bg-black border border-gray-200 flex-shrink-0"></button>
-                                    <button onclick="setTextColor('#ffffff')" class="w-8 h-8 rounded-full bg-white border border-gray-200 flex-shrink-0"></button>
-                                    <button onclick="setTextColor('#ef4444')" class="w-8 h-8 rounded-full bg-red-500 flex-shrink-0"></button>
-                                    <button onclick="setTextColor('#f472b6')" class="w-8 h-8 rounded-full bg-pink-400 flex-shrink-0"></button>
-                                    <button onclick="setTextColor('#fbbf24')" class="w-8 h-8 rounded-full bg-amber-400 flex-shrink-0"></button>
-                                    <button onclick="setTextColor('#3b82f6')" class="w-8 h-8 rounded-full bg-blue-500 flex-shrink-0"></button>
-                                    <button onclick="setTextColor('#8b5cf6')" class="w-8 h-8 rounded-full bg-violet-500 flex-shrink-0"></button>
-                                    <input type="color" id="custom-color" class="w-8 h-8 p-0 border-0 rounded-full overflow-hidden" onchange="setTextColor(this.value)">
+                <div id="tab-text" class="tab-content hidden animate-fade-in">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="text-xs text-amber-500 font-bold block mb-2 pl-1">テキストを入力</label>
+                            <input type="text" id="text-input" placeholder="ここに入力してね" class="w-full p-4 border-2 border-amber-100 rounded-2xl focus:outline-none focus:border-amber-400 focus:bg-amber-50 transition text-lg font-bold text-gray-700">
+                        </div>
+                        
+                        <div class="flex-1">
+                            <label class="text-xs text-amber-500 font-bold block mb-2 pl-1">カラーをえらぶ</label>
+                            <div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+                                <button onclick="setTextColor('#000000')" class="w-10 h-10 rounded-full bg-black border-2 border-gray-200 flex-shrink-0 shadow-sm hover:scale-110 transition"></button>
+                                <button onclick="setTextColor('#ffffff')" class="w-10 h-10 rounded-full bg-white border-2 border-gray-200 flex-shrink-0 shadow-sm hover:scale-110 transition"></button>
+                                <button onclick="setTextColor('#ef4444')" class="w-10 h-10 rounded-full bg-red-400 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <button onclick="setTextColor('#f472b6')" class="w-10 h-10 rounded-full bg-pink-400 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <button onclick="setTextColor('#fbbf24')" class="w-10 h-10 rounded-full bg-amber-400 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <button onclick="setTextColor('#a3e635')" class="w-10 h-10 rounded-full bg-lime-400 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <button onclick="setTextColor('#3b82f6')" class="w-10 h-10 rounded-full bg-blue-400 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <button onclick="setTextColor('#8b5cf6')" class="w-10 h-10 rounded-full bg-violet-400 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <div class="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white bg-white">
+                                    <input type="color" id="custom-color" class="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] p-0 border-0 cursor-pointer opacity-0 z-10" onchange="setTextColor(this.value)">
+                                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <button onclick="addText()" class="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-indigo-700 active:transform active:scale-95 transition">追加する</button>
+                        <button onclick="addText()" class="w-full bg-gradient-to-r from-amber-400 to-orange-400 text-white font-extrabold py-4 px-6 rounded-2xl shadow-md hover:shadow-lg btn-hover-pop transition text-lg tracking-wider">
+                            追加する ✏️
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <button onclick="downloadImage()" class="mt-6 w-full bg-gradient-to-r from-pink-500 to-indigo-500 text-white text-lg font-bold py-4 rounded-xl shadow-xl hover:shadow-2xl hover:opacity-90 transform transition hover:-translate-y-1">
-            画像として保存 (ダウンロード) 📥
+        <button onclick="downloadImage()" class="mt-8 w-full bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 text-white text-xl font-extrabold py-5 rounded-3xl shadow-xl hover:shadow-2xl btn-hover-pop transition relative overflow-hidden group">
+            <span class="relative z-10 flex items-center justify-center gap-2">
+                画像を保存する (ダウンロード) 📥
+            </span>
+            <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition duration-300"></div>
         </button>
 
-        <!-- トップへ戻るボタン -->
-        <div class="mt-6 text-center">
-            <a href="../index.html" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 font-bold rounded-full shadow-md hover:shadow-lg hover:bg-indigo-50 transition border-2 border-indigo-200">
+        <div class="mt-8 text-center pb-10">
+            <a href="../index.html" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-amber-500 font-bold rounded-full shadow-md hover:shadow-lg hover:bg-amber-50 transition border-2 border-amber-100">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                 トップへ戻る
             </a>
@@ -311,18 +365,19 @@
                 
                 // フレーム選択ボタンを作成
                 const button = document.createElement('button');
-                button.className = 'frame-btn p-3 border-2 border-gray-200 rounded-lg hover:border-indigo-500 text-sm font-bold bg-white overflow-hidden relative group';
+                // デザイン変更: 丸角、影付き
+                button.className = 'frame-btn p-2 border-2 border-gray-100 rounded-2xl hover:border-amber-400 hover:shadow-md text-sm font-bold bg-white overflow-hidden relative group transition-all';
                 button.onclick = () => setFrame(frame.path);
                 
                 // サムネイル画像を表示
                 const thumbnail = document.createElement('img');
                 thumbnail.src = frame.path;
-                thumbnail.className = 'w-full h-20 object-contain mb-2';
+                thumbnail.className = 'w-full h-20 object-contain mb-2 group-hover:scale-105 transition';
                 thumbnail.alt = frame.name;
                 
                 // フレーム名を表示
                 const label = document.createElement('div');
-                label.className = 'text-xs text-gray-600 font-bold truncate';
+                label.className = 'text-xs text-gray-500 font-bold truncate';
                 label.textContent = frame.name;
                 
                 button.appendChild(thumbnail);
@@ -332,9 +387,9 @@
             
             // 「なし」ボタンを追加
             const noneButton = document.createElement('button');
-            noneButton.className = 'frame-btn p-3 border-2 border-gray-200 rounded-lg hover:border-indigo-500 text-sm font-bold bg-white';
+            noneButton.className = 'frame-btn p-2 border-2 border-gray-100 rounded-2xl hover:border-amber-400 hover:shadow-md text-sm font-bold bg-white text-gray-400 transition-all';
             noneButton.onclick = () => setFrame('none');
-            noneButton.innerHTML = '🚫 なし';
+            noneButton.innerHTML = '<span class="text-2xl block mb-1">🚫</span>なし';
             frameGrid.insertBefore(noneButton, frameGrid.firstChild);
         }
         
@@ -420,23 +475,14 @@
 
         function drawTrimming() {
             trimCtx.clearRect(0, 0, trimCanvas.width, trimCanvas.height);
-            // 透明背景の目安としてグレーにする
-            trimCtx.fillStyle = '#e5e7eb'; 
+            // 透明背景の目安としてグレーにする -> デザイン変更: ドット柄など
+            trimCtx.fillStyle = '#f9fafb'; 
             trimCtx.fillRect(0,0, trimCanvas.width, trimCanvas.height);
 
             if (!trimSourceImage) return;
 
-            // スライダーの値(0.1~3.0) × 初期スケール
-            // ユーザーは拡大縮小を自由に行う
             const baseScale = Math.min(TRIM_CANVAS_W / trimSourceImage.width, TRIM_CANVAS_H / trimSourceImage.height) * 0.8;
             
-            // スライダー値を対数的に扱ったり調整もできるが、シンプルに
-            // スライダー1.0 = 初期表示サイズ とする
-            
-            // 前回描画時の倍率を保持していないとズーム中心がずれるため、
-            // 簡易的に中心ズームを実装する
-            // （このコードは簡易版です）
-
             trimCtx.drawImage(
                 trimSourceImage, 
                 trimState.x, 
@@ -446,13 +492,11 @@
             );
 
             // ガイド枠（16:9の枠線）
-            // ここではキャンバス全体が16:9なので枠線を表示
-            trimCtx.strokeStyle = '#6366f1';
-            trimCtx.lineWidth = 2;
+            trimCtx.strokeStyle = '#f59e0b'; // amber-500
+            trimCtx.lineWidth = 4;
+            trimCtx.setLineDash([10, 5]);
             trimCtx.strokeRect(0, 0, TRIM_CANVAS_W, TRIM_CANVAS_H);
-            
-            // 外側を少し暗くしてトリミング範囲をわかりやすく
-            // (今回はキャンバス全体＝トリミング範囲なので不要だが、演出として)
+            trimCtx.setLineDash([]);
         }
 
         trimScaleSlider.addEventListener('input', (e) => {
@@ -514,18 +558,15 @@
             finalCanvas.height = BASE_HEIGHT;
             const fCtx = finalCanvas.getContext('2d');
             
-            // 白背景で初期化（透明部分が出ないように）
+            // 白背景で初期化
             fCtx.fillStyle = '#ffffff';
             fCtx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
 
-            // トリミングキャンバスと最終キャンバスは同じサイズ（800x450 = 16:9）なので、比率は1:1
-            // トリミングキャンバス上の画像の位置とサイズをそのまま最終キャンバスに描画
             const drawX = trimState.x;
             const drawY = trimState.y;
             const drawWidth = trimSourceImage.width * trimState.scale;
             const drawHeight = trimSourceImage.height * trimState.scale;
             
-            // 16:9の領域（0, 0, 800, 450）に画像を描画
             fCtx.drawImage(
                 trimSourceImage,
                 drawX,
@@ -582,13 +623,14 @@
                     // 中心を基準に描画
                     ctx.drawImage(obj.img, -w/2, -h/2, w, h);
                 } else if (obj.type === 'text') {
-                    ctx.font = `bold ${obj.fontSize}px sans-serif`;
+                    // フォントも丸文字に変更
+                    ctx.font = `bold ${obj.fontSize}px "M PLUS Rounded 1c", sans-serif`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.lineJoin = 'round';
                     
                     ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 4;
+                    ctx.lineWidth = 10; // 縁取りを太く
                     ctx.strokeText(obj.content, 0, 0);
                     
                     ctx.fillStyle = obj.color;
@@ -596,9 +638,9 @@
                 }
 
                 if (obj === selectedObject) {
-                    ctx.strokeStyle = '#6366f1';
-                    ctx.lineWidth = 2 / obj.scale;
-                    ctx.setLineDash([5 / obj.scale, 5 / obj.scale]);
+                    ctx.strokeStyle = '#f59e0b'; // amber-500
+                    ctx.lineWidth = 3 / obj.scale;
+                    ctx.setLineDash([8 / obj.scale, 8 / obj.scale]);
                     
                     let boxW = 100;
                     let boxH = 100;
@@ -610,10 +652,18 @@
                         boxW = obj.width;
                         boxH = obj.height;
                     } else if (obj.type === 'text') {
-                        boxW = ctx.measureText(obj.content).width + 20;
+                        boxW = ctx.measureText(obj.content).width + 30;
                         boxH = obj.fontSize * 1.2; 
                     }
                     ctx.strokeRect(-boxW/2, -boxH/2, boxW, boxH);
+                    
+                    // 選択枠の角に丸いハンドルを描画（装飾）
+                    ctx.fillStyle = '#f59e0b';
+                    const handleSize = 10 / obj.scale;
+                    ctx.beginPath(); ctx.arc(-boxW/2, -boxH/2, handleSize, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(boxW/2, -boxH/2, handleSize, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(boxW/2, boxH/2, handleSize, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(-boxW/2, boxH/2, handleSize, 0, Math.PI*2); ctx.fill();
                 }
                 ctx.restore();
             });
@@ -839,11 +889,10 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active', 'text-indigo-600', 'border-indigo-500', 'border-b-2');
-                btn.classList.add('text-gray-500');
+                // スタイルリセット
+                btn.classList.remove('active');
                 if (btn.dataset.tab === tabName) {
-                    btn.classList.add('active', 'text-indigo-600', 'border-indigo-500', 'border-b-2');
-                    btn.classList.remove('text-gray-500');
+                    btn.classList.add('active');
                 }
             });
         }
@@ -857,7 +906,7 @@
             selectedObject = null;
             draw();
             const link = document.createElement('a');
-            link.download = 'my-purikura-v5.png';
+            link.download = 'stakane-deco-v5.png'; // ファイル名も変更
             link.href = canvas.toDataURL('image/png');
             link.click();
             selectedObject = currentSelection;
