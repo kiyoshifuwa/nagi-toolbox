@@ -1,614 +1,743 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Box, Search, Plus, Trash2, Edit3, Play, Copy, Save, X,
-  Layout, MessageSquare, Users, Heart, Calendar, BarChart2,
-  Briefcase, Code, PenTool, Globe, Phone, Shield, User, CheckCircle, Info
-} from 'lucide-react';
-
-// --- モックデータ (初期データ) ---
-const INITIAL_PROMPTS = [
-  {
-    id: 'p1',
-    title: '【営業】初回アポイント打診メール',
-    category: 'sales',
-    content: '{{相手の会社名}} 様\n\nお世話になっております。\n株式会社{{自社名}}の{{自分の名前}}と申します。\n\n貴社の「{{相手の事業内容}}」の取り組みを拝見し、特に{{具体的な関心点}}について、弊社の{{自社サービス}}がお役に立てるのではないかと考えご連絡いたしました。\n\nもしよろしければ、一度15分ほどオンラインで情報交換のお時間をいただけないでしょうか。\n\n候補日:\n1. {{候補日時1}}\n2. {{候補日時2}}\n3. {{候補日時3}}\n\nご検討のほど、よろしくお願いいたします。',
-    authorName: '山田 太郎',
-    authorPhoto: null,
-    createdAt: new Date('2023-10-01').toISOString(),
-    usageCount: 128,
-    favoritedBy: ['current_user'],
-    tags: ['新規開拓', 'メール']
-  },
-  {
-    id: 'p2',
-    title: '【エンジニア】コードレビュー依頼',
-    category: 'engineer',
-    content: '以下のコードのレビューをお願いします。\n\n言語: {{言語}}\n目的: {{実装の目的}}\n懸念点: {{特に見てほしい箇所}}\n\n```\n{{コード貼り付け}}\n```',
-    authorName: '鈴木 一郎',
-    authorPhoto: null,
-    createdAt: new Date('2023-10-05').toISOString(),
-    usageCount: 45,
-    favoritedBy: [],
-    tags: ['開発', 'Github']
-  },
-  {
-    id: 'p3',
-    title: '【CS】障害発生時のお詫び',
-    category: 'cs',
-    content: '{{お客様名}} 様\n\n平素より弊社サービスをご利用いただきありがとうございます。\nサポート担当の{{自分の名前}}です。\n\n現在発生しております{{障害内容}}につきまして、多大なるご迷惑をおかけしておりますことを深くお詫び申し上げます。\n\n現在の状況:\n- 発生時刻: {{発生時刻}}\n- 原因: {{原因（調査中なら調査中と記載）}}\n- 復旧見込み: {{復旧見込み}}\n\n進展があり次第、直ちにご連絡いたします。\n今しばらくお待ちいただけますようお願い申し上げます。',
-    authorName: '佐藤 花子',
-    authorPhoto: null,
-    createdAt: new Date('2023-11-12').toISOString(),
-    usageCount: 340,
-    favoritedBy: ['current_user'],
-    tags: ['緊急', '謝罪']
-  },
-  {
-    id: 'p4',
-    title: '【マーケ】新製品キャッチコピー案出し',
-    category: 'marketing',
-    content: 'あなたはプロのコピーライターです。\n以下の製品のキャッチコピーを10個考えてください。\n\n製品名: {{製品名}}\nターゲット: {{ターゲット層}}\n訴求ポイント: {{強み}}\nトーン＆マナー: {{雰囲気（例: 親しみやすい、高級感）}}',
-    authorName: '田中 クリエイティブ',
-    authorPhoto: null,
-    createdAt: new Date('2023-12-01').toISOString(),
-    usageCount: 82,
-    favoritedBy: [],
-    tags: ['アイデア出し', '広告']
-  }
-];
-
-// --- 定数 ---
-const CATEGORIES = [
-  { id: 'marketing', label: 'マーケティング', icon: Globe, color: 'text-blue-600 bg-blue-50' },
-  { id: 'inside_sales', label: 'インサイドセールス', icon: Phone, color: 'text-green-600 bg-green-50' },
-  { id: 'sales', label: '営業', icon: Briefcase, color: 'text-emerald-600 bg-emerald-50' },
-  { id: 'cs', label: 'カスタマーサクセス', icon: User, color: 'text-orange-600 bg-orange-50' },
-  { id: 'corporate', label: 'コーポレート', icon: Shield, color: 'text-slate-600 bg-slate-50' },
-  { id: 'engineer', label: 'エンジニア', icon: Code, color: 'text-violet-600 bg-violet-50' },
-  { id: 'designer', label: 'デザイナー', icon: PenTool, color: 'text-pink-600 bg-pink-50' },
-];
-
-const MOCK_USER = {
-  uid: 'current_user',
-  displayName: 'デモ ユーザー',
-  photoURL: 'https://ui-avatars.com/api/?name=Demo+User&background=6366f1&color=fff'
-};
-
-// --- コンポーネント ---
-
-const Button = ({ children, onClick, variant = 'primary', className = '', ...props }) => {
-  const styles = {
-    primary: "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm",
-    secondary: "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50",
-    danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-transparent",
-    ghost: "text-slate-500 hover:bg-slate-100"
-  };
-  return (
-    <button 
-      onClick={onClick} 
-      className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 text-sm ${styles[variant]} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
-
-const Card = ({ children, className = '' }) => (
-  <div className={`bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition p-5 ${className}`}>
-    {children}
-  </div>
-);
-
-// --- メインアプリ ---
-
-export default function App() {
-  const [user, setUser] = useState(MOCK_USER); // 最初からログイン状態
-  const [prompts, setPrompts] = useState([]);
-  const [view, setView] = useState('list');
-  const [editingPrompt, setEditingPrompt] = useState(null);
-  const [currentCategory, setCurrentCategory] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [toast, setToast] = useState(null);
-
-  // 初期ロード
-  useEffect(() => {
-    // ローカルストレージになければ初期データを使用
-    const saved = localStorage.getItem('demo_prompts');
-    if (saved) {
-      setPrompts(JSON.parse(saved));
-    } else {
-      setPrompts(INITIAL_PROMPTS);
-    }
-  }, []);
-
-  // データ変更時にローカルストレージへ保存
-  useEffect(() => {
-    if (prompts.length > 0) {
-      localStorage.setItem('demo_prompts', JSON.stringify(prompts));
-    }
-  }, [prompts]);
-
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const handleSave = (data) => {
-    const newPrompts = [...prompts];
-    if (data.id) {
-      // 更新
-      const idx = newPrompts.findIndex(p => p.id === data.id);
-      newPrompts[idx] = { 
-        ...data, 
-        updatedAt: new Date().toISOString() 
-      };
-    } else {
-      // 新規
-      newPrompts.unshift({
-        ...data,
-        id: 'new_' + Date.now(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        authorName: user.displayName,
-        authorId: user.uid,
-        authorPhoto: user.photoURL,
-        usageCount: 0,
-        favoritedBy: []
-      });
-    }
-    setPrompts(newPrompts);
-    setView('list');
-    showToast('保存しました');
-  };
-
-  const handleDelete = (id) => {
-    if (!confirm('本当に削除しますか？')) return;
-    setPrompts(prompts.filter(p => p.id !== id));
-    showToast('削除しました');
-  };
-
-  const toggleFavorite = (e, promptId) => {
-    e.stopPropagation();
-    setPrompts(prompts.map(p => {
-      if (p.id === promptId) {
-        const isFav = p.favoritedBy.includes(user.uid);
-        const newFavs = isFav 
-          ? p.favoritedBy.filter(uid => uid !== user.uid)
-          : [...p.favoritedBy, user.uid];
-        return { ...p, favoritedBy: newFavs };
-      }
-      return p;
-    }));
-  };
-
-  const handleRun = (prompt) => {
-    // 使用回数カウントアップ
-    setPrompts(prompts.map(p => 
-      p.id === prompt.id ? { ...p, usageCount: (p.usageCount || 0) + 1 } : p
-    ));
-    setEditingPrompt(prompt);
-    setView('run');
-  };
-
-  // --- Views ---
-
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col md:flex-row">
-      <Sidebar 
-        currentCategory={currentCategory} 
-        setCategory={setCurrentCategory} 
-        user={user}
-      />
-
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Mobile Header */}
-        <header className="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center">
-          <span className="font-bold text-indigo-600 flex items-center gap-2">
-            <Box className="w-5 h-5"/> PromptHub
-          </span>
-          <img src={user.photoURL} className="w-8 h-8 rounded-full border border-slate-200" alt="user" />
-        </header>
-
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
-          {/* Mobile Only Disclaimer */}
-          <div className="md:hidden mb-4 p-3 bg-blue-50 text-blue-800 text-xs rounded-lg flex items-start gap-2 border border-blue-100">
-             <Info className="w-4 h-4 shrink-0 mt-0.5" />
-             <span>※これはデモ版です。データはブラウザ内にのみ保存されます。</span>
-          </div>
-
-          {view === 'list' && (
-            <ListView 
-              prompts={prompts}
-              category={currentCategory}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              user={user}
-              onCreate={() => { setEditingPrompt({}); setView('edit'); }}
-              onEdit={(p) => { setEditingPrompt(p); setView('edit'); }}
-              onDelete={handleDelete}
-              onRun={handleRun}
-              onToggleFavorite={toggleFavorite}
-            />
-          )}
-
-          {view === 'edit' && (
-            <EditView 
-              initialData={editingPrompt} 
-              onSave={handleSave} 
-              onCancel={() => setView('list')} 
-            />
-          )}
-
-          {view === 'run' && (
-            <RunView 
-              prompt={editingPrompt} 
-              onBack={() => setView('list')} 
-              showToast={showToast}
-            />
-          )}
-
-          {/* Toast Notification */}
-          {toast && (
-            <div className="fixed bottom-6 right-6 bg-slate-800 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-fade-in-up z-50">
-              <CheckCircle className="text-green-400 w-5 h-5" />
-              <span>{toast}</span>
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
-  );
-}
-
-// --- Sub Components ---
-
-function Sidebar({ currentCategory, setCategory, user }) {
-  const NavItem = ({ id, icon: Icon, label }) => (
-    <button 
-      onClick={() => setCategory(id)}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition mb-1
-        ${currentCategory === id 
-          ? 'bg-indigo-50 text-indigo-700' 
-          : 'text-slate-600 hover:bg-slate-100'}`}
-    >
-      <Icon className={`w-4 h-4 ${currentCategory === id ? 'text-indigo-600' : 'text-slate-400'}`} />
-      {label}
-    </button>
-  );
-
-  return (
-    <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-screen shrink-0">
-      <div className="p-6 border-b border-slate-100">
-        <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-          <Box className="text-indigo-600 fill-indigo-100" /> Prompt Hub
-        </h1>
-        <p className="text-xs text-slate-400 mt-1 ml-8">社内用デモ版</p>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-        <div className="mb-6">
-          <NavItem id="all" icon={Layout} label="すべてのプロンプト" />
-          <NavItem id="favorites" icon={Heart} label="お気に入り" />
-        </div>
-
-        <div className="mb-2 px-3 text-xs font-bold text-slate-400 uppercase tracking-wider">カテゴリ</div>
-        {CATEGORIES.map(cat => (
-          <NavItem key={cat.id} id={cat.id} icon={cat.icon} label={cat.label} />
-        ))}
-      </div>
-
-      <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-        <div className="flex items-center gap-3 mb-3 px-2">
-          <img src={user.photoURL} className="w-8 h-8 rounded-full shadow-sm" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-700 truncate">{user.displayName}</p>
-            <p className="text-xs text-slate-500 truncate">demo@company.com</p>
-          </div>
-        </div>
-        <div className="px-2 py-2 bg-slate-100 rounded text-xs text-slate-500 leading-relaxed border border-slate-200">
-           ※これはデモ版です。<br/>データはブラウザ内にのみ保存されます。
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-function ListView({ prompts, category, searchTerm, setSearchTerm, user, onCreate, onEdit, onDelete, onRun, onToggleFavorite }) {
-  const filtered = prompts.filter(p => {
-    if (category === 'favorites') {
-      if (!p.favoritedBy?.includes(user.uid)) return false;
-    } else if (category !== 'all') {
-      if (p.category !== category) return false;
-    }
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      p.title?.toLowerCase().includes(searchLower) ||
-      p.content?.toLowerCase().includes(searchLower) ||
-      p.authorName?.toLowerCase().includes(searchLower)
-    );
-  });
-
-  const getCategoryInfo = (id) => CATEGORIES.find(c => c.id === id) || { label: '未分類', color: 'text-slate-500 bg-slate-100', icon: Box };
-
-  return (
-    <div className="max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            {category === 'all' ? <Layout className="w-6 h-6 text-slate-400"/> : 
-             category === 'favorites' ? <Heart className="w-6 h-6 text-pink-500 fill-pink-500"/> : 
-             (() => {
-                const Cat = CATEGORIES.find(c => c.id === category);
-                const Icon = Cat ? Cat.icon : Box;
-                return <Icon className="w-6 h-6 text-slate-600"/>;
-             })()
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Hub - プロンプト管理ツール</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel Standalone for JSX transformation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @keyframes fade-in-up {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
             }
-            {category === 'all' ? 'すべてのプロンプト' : 
-             category === 'favorites' ? 'お気に入り' : 
-             CATEGORIES.find(c => c.id === category)?.label}
-          </h2>
-          <p className="text-slate-500 text-sm mt-1 ml-8">{filtered.length}件のテンプレートが見つかりました</p>
-        </div>
-        <div className="flex gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
-            <input 
-              type="text" 
-              placeholder="キーワード検索..." 
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
-            />
-          </div>
-          <Button onClick={onCreate} className="shrink-0"><Plus className="w-4 h-4" /> 新規作成</Button>
-        </div>
-      </div>
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fade-in-up 0.3s ease-out;
+        }
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-        {filtered.map(prompt => {
-          const catInfo = getCategoryInfo(prompt.category);
-          const isFav = prompt.favoritedBy?.includes(user.uid);
-          const CatIcon = catInfo.icon;
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Lucide icons as React components
+        const createIcon = (name) => {
+            return (props) => {
+                const { className = '', ...restProps } = props;
+                return React.createElement('i', {
+                    ...restProps,
+                    'data-lucide': name,
+                    className: className
+                });
+            };
+        };
+
+        const Box = createIcon('box');
+        const Search = createIcon('search');
+        const Plus = createIcon('plus');
+        const Trash2 = createIcon('trash-2');
+        const Edit3 = createIcon('edit-3');
+        const Play = createIcon('play');
+        const Copy = createIcon('copy');
+        const Save = createIcon('save');
+        const X = createIcon('x');
+        const Layout = createIcon('layout');
+        const MessageSquare = createIcon('message-square');
+        const Users = createIcon('users');
+        const Heart = createIcon('heart');
+        const Calendar = createIcon('calendar');
+        const BarChart2 = createIcon('bar-chart-2');
+        const Briefcase = createIcon('briefcase');
+        const Code = createIcon('code');
+        const PenTool = createIcon('pen-tool');
+        const Globe = createIcon('globe');
+        const Phone = createIcon('phone');
+        const Shield = createIcon('shield');
+        const User = createIcon('user');
+        const CheckCircle = createIcon('check-circle');
+        const Info = createIcon('info');
+
+        // --- モックデータ (初期データ) ---
+        const INITIAL_PROMPTS = [
+          {
+            id: 'p1',
+            title: '【営業】初回アポイント打診メール',
+            category: 'sales',
+            content: '{{相手の会社名}} 様\n\nお世話になっております。\n株式会社{{自社名}}の{{自分の名前}}と申します。\n\n貴社の「{{相手の事業内容}}」の取り組みを拝見し、特に{{具体的な関心点}}について、弊社の{{自社サービス}}がお役に立てるのではないかと考えご連絡いたしました。\n\nもしよろしければ、一度15分ほどオンラインで情報交換のお時間をいただけないでしょうか。\n\n候補日:\n1. {{候補日時1}}\n2. {{候補日時2}}\n3. {{候補日時3}}\n\nご検討のほど、よろしくお願いいたします。',
+            authorName: '山田 太郎',
+            authorPhoto: null,
+            createdAt: new Date('2023-10-01').toISOString(),
+            usageCount: 128,
+            favoritedBy: ['current_user'],
+            tags: ['新規開拓', 'メール']
+          },
+          {
+            id: 'p2',
+            title: '【エンジニア】コードレビュー依頼',
+            category: 'engineer',
+            content: '以下のコードのレビューをお願いします。\n\n言語: {{言語}}\n目的: {{実装の目的}}\n懸念点: {{特に見てほしい箇所}}\n\n```\n{{コード貼り付け}}\n```',
+            authorName: '鈴木 一郎',
+            authorPhoto: null,
+            createdAt: new Date('2023-10-05').toISOString(),
+            usageCount: 45,
+            favoritedBy: [],
+            tags: ['開発', 'Github']
+          },
+          {
+            id: 'p3',
+            title: '【CS】障害発生時のお詫び',
+            category: 'cs',
+            content: '{{お客様名}} 様\n\n平素より弊社サービスをご利用いただきありがとうございます。\nサポート担当の{{自分の名前}}です。\n\n現在発生しております{{障害内容}}につきまして、多大なるご迷惑をおかけしておりますことを深くお詫び申し上げます。\n\n現在の状況:\n- 発生時刻: {{発生時刻}}\n- 原因: {{原因（調査中なら調査中と記載）}}\n- 復旧見込み: {{復旧見込み}}\n\n進展があり次第、直ちにご連絡いたします。\n今しばらくお待ちいただけますようお願い申し上げます。',
+            authorName: '佐藤 花子',
+            authorPhoto: null,
+            createdAt: new Date('2023-11-12').toISOString(),
+            usageCount: 340,
+            favoritedBy: ['current_user'],
+            tags: ['緊急', '謝罪']
+          },
+          {
+            id: 'p4',
+            title: '【マーケ】新製品キャッチコピー案出し',
+            category: 'marketing',
+            content: 'あなたはプロのコピーライターです。\n以下の製品のキャッチコピーを10個考えてください。\n\n製品名: {{製品名}}\nターゲット: {{ターゲット層}}\n訴求ポイント: {{強み}}\nトーン＆マナー: {{雰囲気（例: 親しみやすい、高級感）}}',
+            authorName: '田中 クリエイティブ',
+            authorPhoto: null,
+            createdAt: new Date('2023-12-01').toISOString(),
+            usageCount: 82,
+            favoritedBy: [],
+            tags: ['アイデア出し', '広告']
+          }
+        ];
+
+        // --- 定数 ---
+        const CATEGORIES = [
+          { id: 'marketing', label: 'マーケティング', icon: Globe, color: 'text-blue-600 bg-blue-50' },
+          { id: 'inside_sales', label: 'インサイドセールス', icon: Phone, color: 'text-green-600 bg-green-50' },
+          { id: 'sales', label: '営業', icon: Briefcase, color: 'text-emerald-600 bg-emerald-50' },
+          { id: 'cs', label: 'カスタマーサクセス', icon: User, color: 'text-orange-600 bg-orange-50' },
+          { id: 'corporate', label: 'コーポレート', icon: Shield, color: 'text-slate-600 bg-slate-50' },
+          { id: 'engineer', label: 'エンジニア', icon: Code, color: 'text-violet-600 bg-violet-50' },
+          { id: 'designer', label: 'デザイナー', icon: PenTool, color: 'text-pink-600 bg-pink-50' },
+        ];
+
+        const MOCK_USER = {
+          uid: 'current_user',
+          displayName: 'デモ ユーザー',
+          photoURL: 'https://ui-avatars.com/api/?name=Demo+User&background=6366f1&color=fff'
+        };
+
+        // --- コンポーネント ---
+
+        const Button = ({ children, onClick, variant = 'primary', className = '', ...props }) => {
+          const styles = {
+            primary: "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm",
+            secondary: "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50",
+            danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-transparent",
+            ghost: "text-slate-500 hover:bg-slate-100"
+          };
+          return (
+            <button 
+              onClick={onClick} 
+              className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 text-sm ${styles[variant]} ${className}`}
+              {...props}
+            >
+              {children}
+            </button>
+          );
+        };
+
+        const Card = ({ children, className = '' }) => (
+          <div className={`bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition p-5 ${className}`}>
+            {children}
+          </div>
+        );
+
+        // --- メインアプリ ---
+
+        function App() {
+          const [user, setUser] = useState(MOCK_USER); // 最初からログイン状態
+          const [prompts, setPrompts] = useState([]);
+          const [view, setView] = useState('list');
+          const [editingPrompt, setEditingPrompt] = useState(null);
+          const [currentCategory, setCurrentCategory] = useState('all');
+          const [searchTerm, setSearchTerm] = useState('');
+          const [toast, setToast] = useState(null);
+
+          // 初期ロード
+          useEffect(() => {
+            // ローカルストレージになければ初期データを使用
+            const saved = localStorage.getItem('demo_prompts');
+            if (saved) {
+              setPrompts(JSON.parse(saved));
+            } else {
+              setPrompts(INITIAL_PROMPTS);
+            }
+            // Lucide iconsを初期化
+            if (window.lucide) {
+              window.lucide.createIcons();
+            }
+          }, []);
+
+          // データ変更時にローカルストレージへ保存
+          useEffect(() => {
+            if (prompts.length > 0) {
+              localStorage.setItem('demo_prompts', JSON.stringify(prompts));
+            }
+            // アイコンを再描画
+            if (window.lucide) {
+              setTimeout(() => window.lucide.createIcons(), 100);
+            }
+          }, [prompts]);
+
+          // アイコンを再描画
+          useEffect(() => {
+            if (window.lucide) {
+              setTimeout(() => window.lucide.createIcons(), 100);
+            }
+          });
+
+          const showToast = (msg) => {
+            setToast(msg);
+            setTimeout(() => setToast(null), 3000);
+          };
+
+          const handleSave = (data) => {
+            const newPrompts = [...prompts];
+            if (data.id) {
+              // 更新
+              const idx = newPrompts.findIndex(p => p.id === data.id);
+              newPrompts[idx] = { 
+                ...data, 
+                updatedAt: new Date().toISOString() 
+              };
+            } else {
+              // 新規
+              newPrompts.unshift({
+                ...data,
+                id: 'new_' + Date.now(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                authorName: user.displayName,
+                authorId: user.uid,
+                authorPhoto: user.photoURL,
+                usageCount: 0,
+                favoritedBy: []
+              });
+            }
+            setPrompts(newPrompts);
+            setView('list');
+            showToast('保存しました');
+          };
+
+          const handleDelete = (id) => {
+            if (!confirm('本当に削除しますか？')) return;
+            setPrompts(prompts.filter(p => p.id !== id));
+            showToast('削除しました');
+          };
+
+          const toggleFavorite = (e, promptId) => {
+            e.stopPropagation();
+            setPrompts(prompts.map(p => {
+              if (p.id === promptId) {
+                const isFav = p.favoritedBy.includes(user.uid);
+                const newFavs = isFav 
+                  ? p.favoritedBy.filter(uid => uid !== user.uid)
+                  : [...p.favoritedBy, user.uid];
+                return { ...p, favoritedBy: newFavs };
+              }
+              return p;
+            }));
+          };
+
+          const handleRun = (prompt) => {
+            // 使用回数カウントアップ
+            setPrompts(prompts.map(p => 
+              p.id === prompt.id ? { ...p, usageCount: (p.usageCount || 0) + 1 } : p
+            ));
+            setEditingPrompt(prompt);
+            setView('run');
+          };
+
+          // --- Views ---
 
           return (
-            <Card key={prompt.id} className="flex flex-col h-full group relative hover:border-indigo-300 hover:shadow-md transition-all duration-300">
-              <div className="flex justify-between items-start mb-3">
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${catInfo.color}`}>
-                  <CatIcon className="w-3 h-3" /> {catInfo.label}
-                </span>
-                <button 
-                  onClick={(e) => onToggleFavorite(e, prompt.id)}
-                  className={`p-1.5 rounded-full transition ${isFav ? 'text-pink-500 bg-pink-50' : 'text-slate-300 hover:bg-slate-100'}`}
-                >
-                  <Heart className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
-                </button>
-              </div>
+            <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col md:flex-row">
+              <Sidebar 
+                currentCategory={currentCategory} 
+                setCategory={setCurrentCategory} 
+                user={user}
+              />
 
-              <div className="flex-1 mb-4 cursor-pointer" onClick={() => onRun(prompt)}>
-                <h3 className="font-bold text-lg text-slate-800 mb-2 line-clamp-1 group-hover:text-indigo-600 transition">{prompt.title}</h3>
-                <p className="text-sm text-slate-500 font-mono bg-slate-50 p-3 rounded-lg border border-slate-100 line-clamp-3 leading-relaxed">
-                  {prompt.content}
-                </p>
-              </div>
+              <div className="flex-1 flex flex-col h-screen overflow-hidden">
+                {/* Mobile Header */}
+                <header className="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center">
+                  <span className="font-bold text-indigo-600 flex items-center gap-2">
+                    <Box className="w-5 h-5"/> PromptHub
+                  </span>
+                  <img src={user.photoURL} className="w-8 h-8 rounded-full border border-slate-200" alt="user" />
+                </header>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5" title="作成者">
-                    {prompt.authorPhoto ? (
-                      <img src={prompt.authorPhoto} className="w-5 h-5 rounded-full" />
-                    ) : <User className="w-4 h-4" />}
-                    <span className="max-w-[80px] truncate">{prompt.authorName}</span>
+                <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
+                  {/* Mobile Only Disclaimer */}
+                  <div className="md:hidden mb-4 p-3 bg-blue-50 text-blue-800 text-xs rounded-lg flex items-start gap-2 border border-blue-100">
+                     <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                     <span>※これはデモ版です。データはブラウザ内にのみ保存されます。</span>
                   </div>
-                  <div className="flex items-center gap-1" title="これまでの使用回数">
-                    <BarChart2 className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="font-medium">{prompt.usageCount || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1" title="更新日">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{new Date(prompt.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
 
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                  <button onClick={() => onEdit(prompt)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded"><Edit3 className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => onDelete(prompt.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-      
-      {filtered.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-slate-300">
-          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-            <Search className="w-8 h-8 text-slate-300" />
-          </div>
-          <p className="text-slate-500 font-medium">条件に合うプロンプトが見つかりません</p>
-          <p className="text-slate-400 text-sm mt-1">検索条件を変えるか、新しく作成してください</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function EditView({ initialData, onSave, onCancel }) {
-  const [formData, setFormData] = useState({
-    title: initialData.title || '',
-    category: initialData.category || 'marketing',
-    content: initialData.content || ''
-  });
-
-  const handleSubmit = () => {
-    if (!formData.title || !formData.content) return alert("タイトルと内容は必須です");
-    onSave({ ...initialData, ...formData });
-  };
-
-  return (
-    <div className="max-w-3xl mx-auto animate-fade-in">
-      <button onClick={onCancel} className="mb-4 text-sm text-slate-500 hover:text-indigo-600 flex items-center gap-1 group">
-        <Layout className="w-4 h-4 group-hover:-translate-x-1 transition" /> 一覧に戻る
-      </button>
-      
-      <Card className="p-8 border-t-4 border-t-indigo-500">
-        <h2 className="text-2xl font-bold mb-8 flex items-center gap-2">
-          {initialData.id ? <Edit3 className="w-6 h-6 text-indigo-500"/> : <Plus className="w-6 h-6 text-indigo-500"/>}
-          {initialData.id ? 'プロンプトを編集' : '新規プロンプト作成'}
-        </h2>
-        
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">カテゴリ</label>
-                <div className="relative">
-                  <select 
-                    className="w-full appearance-none border border-slate-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm pr-8"
-                    value={formData.category}
-                    onChange={e => setFormData({...formData, category: e.target.value})}
-                  >
-                    {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-                  </select>
-                  <Briefcase className="absolute right-3 top-3 w-4 h-4 text-slate-400 pointer-events-none"/>
-                </div>
-              </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">タイトル</label>
-            <input 
-              className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none"
-              value={formData.title}
-              onChange={e => setFormData({...formData, title: e.target.value})}
-              placeholder="例: クライアント向け謝罪メール案"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2 flex justify-between items-center">
-              <span>プロンプト内容</span>
-              <span className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-1 rounded font-mono">
-                変数記法: {'{{変数名}}'}
-              </span>
-            </label>
-            <textarea 
-              rows={12}
-              className="w-full border border-slate-300 rounded-lg p-4 font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed"
-              value={formData.content}
-              onChange={e => setFormData({...formData, content: e.target.value})}
-              placeholder="ここにプロンプトを入力してください...&#10;&#10;例:&#10;あなたはプロのマーケターです。以下の製品のキャッチコピーを考えてください。&#10;&#10;製品名: {{製品名}}&#10;ターゲット層: {{ターゲット}}"
-            />
-            <p className="text-xs text-slate-400 mt-2 text-right">Markdown記法が使えます</p>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
-            <Button variant="secondary" onClick={onCancel}>キャンセル</Button>
-            <Button onClick={handleSubmit}><Save className="w-4 h-4" /> 保存する</Button>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function RunView({ prompt, onBack, showToast }) {
-  const variables = useMemo(() => {
-    const regex = /{{(.*?)}}/g;
-    const vars = new Set();
-    let match;
-    while ((match = regex.exec(prompt.content)) !== null) {
-      vars.add(match[1]);
-    }
-    return Array.from(vars);
-  }, [prompt.content]);
-
-  const [values, setValues] = useState({});
-  const [result, setResult] = useState(prompt.content);
-
-  useEffect(() => {
-    let text = prompt.content;
-    variables.forEach(v => {
-      text = text.split(`{{${v}}}`).join(values[v] || `[${v}]`);
-    });
-    setResult(text);
-  }, [values, prompt.content]);
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(result);
-    showToast('コピーしました！');
-  };
-
-  const getCategoryInfo = (id) => CATEGORIES.find(c => c.id === id);
-  const cat = getCategoryInfo(prompt.category);
-
-  return (
-    <div className="h-[calc(100vh-6rem)] flex flex-col max-w-6xl mx-auto animate-fade-in">
-      <div className="flex items-center gap-2 mb-4">
-        <button onClick={onBack} className="text-slate-500 hover:text-indigo-600 group flex items-center gap-1">
-          <Layout className="w-5 h-5 group-hover:-translate-x-1 transition" />
-        </button>
-        <span className="text-slate-300">/</span>
-        <span className={`text-xs px-2 py-0.5 rounded-full ${cat?.color} flex items-center gap-1`}>
-            {cat && (() => { const Icon = cat.icon; return <Icon className="w-3 h-3"/> })()}
-            {cat?.label}
-        </span>
-        <h2 className="font-bold text-slate-700 truncate">{prompt.title}</h2>
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
-        <div className="w-full lg:w-1/3 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
-          <Card className="border-indigo-100 shadow-md">
-            <div className="flex items-center gap-2 mb-4 text-indigo-900 font-bold border-b border-indigo-50 pb-2">
-              <Edit3 className="w-4 h-4" /> 入力項目
-            </div>
-            {variables.length === 0 ? (
-              <p className="text-sm text-slate-400 py-4 text-center bg-slate-50 rounded-lg">
-                変数は設定されていません。<br/>そのままコピーできます。
-              </p>
-            ) : (
-              <div className="space-y-5">
-                {variables.map(v => (
-                  <div key={v}>
-                    <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">{v}</label>
-                    <input 
-                      className="w-full border border-slate-300 rounded-md p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm"
-                      placeholder={`${v}を入力...`}
-                      onChange={e => setValues({...values, [v]: e.target.value})}
+                  {view === 'list' && (
+                    <ListView 
+                      prompts={prompts}
+                      category={currentCategory}
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                      user={user}
+                      onCreate={() => { setEditingPrompt({}); setView('edit'); }}
+                      onEdit={(p) => { setEditingPrompt(p); setView('edit'); }}
+                      onDelete={handleDelete}
+                      onRun={handleRun}
+                      onToggleFavorite={toggleFavorite}
                     />
-                  </div>
+                  )}
+
+                  {view === 'edit' && (
+                    <EditView 
+                      initialData={editingPrompt} 
+                      onSave={handleSave} 
+                      onCancel={() => setView('list')} 
+                    />
+                  )}
+
+                  {view === 'run' && (
+                    <RunView 
+                      prompt={editingPrompt} 
+                      onBack={() => setView('list')} 
+                      showToast={showToast}
+                    />
+                  )}
+
+                  {/* Toast Notification */}
+                  {toast && (
+                    <div className="fixed bottom-6 right-6 bg-slate-800 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-fade-in-up z-50">
+                      <CheckCircle className="text-green-400 w-5 h-5" />
+                      <span>{toast}</span>
+                    </div>
+                  )}
+                </main>
+              </div>
+            </div>
+          );
+        }
+
+        // --- Sub Components ---
+
+        function Sidebar({ currentCategory, setCategory, user }) {
+          const NavItem = ({ id, icon: Icon, label }) => (
+            <button 
+              onClick={() => setCategory(id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition mb-1
+                ${currentCategory === id 
+                  ? 'bg-indigo-50 text-indigo-700' 
+                  : 'text-slate-600 hover:bg-slate-100'}`}
+            >
+              <Icon className={`w-4 h-4 ${currentCategory === id ? 'text-indigo-600' : 'text-slate-400'}`} />
+              {label}
+            </button>
+          );
+
+          return (
+            <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-screen shrink-0">
+              <div className="p-6 border-b border-slate-100">
+                <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <Box className="text-indigo-600 fill-indigo-100" /> Prompt Hub
+                </h1>
+                <p className="text-xs text-slate-400 mt-1 ml-8">社内用デモ版</p>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <div className="mb-6">
+                  <NavItem id="all" icon={Layout} label="すべてのプロンプト" />
+                  <NavItem id="favorites" icon={Heart} label="お気に入り" />
+                </div>
+
+                <div className="mb-2 px-3 text-xs font-bold text-slate-400 uppercase tracking-wider">カテゴリ</div>
+                {CATEGORIES.map(cat => (
+                  <NavItem key={cat.id} id={cat.id} icon={cat.icon} label={cat.label} />
                 ))}
               </div>
-            )}
-          </Card>
-          
-          <div className="bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-5 rounded-xl shadow-lg mt-auto">
-            <h4 className="font-bold mb-2 text-sm opacity-90 flex items-center gap-2">
-              <Play className="w-4 h-4" /> 使い方ガイド
-            </h4>
-            <ul className="text-xs leading-relaxed opacity-80 space-y-1 list-disc list-inside">
-              <li>左のフォームに変数を入力してください</li>
-              <li>右側のプレビューがリアルタイムで更新されます</li>
-              <li>完成したら「コピー」してAIやメールに貼り付け</li>
-            </ul>
-          </div>
-        </div>
 
-        <div className="w-full lg:w-2/3 flex flex-col shadow-xl rounded-xl overflow-hidden border border-slate-200 bg-white">
-          <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
-            <span className="text-sm font-bold text-slate-600 flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" /> 生成プレビュー
-            </span>
-            <button onClick={copyToClipboard} className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-4 py-2 rounded-md flex items-center gap-1.5 transition shadow-sm font-bold">
-              <Copy className="w-3.5 h-3.5" /> 結果をコピー
-            </button>
-          </div>
-          <textarea 
-            className="flex-1 w-full p-6 font-mono text-sm text-slate-700 bg-white outline-none resize-none leading-loose selection:bg-indigo-100"
-            value={result}
-            readOnly
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
+              <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+                <div className="flex items-center gap-3 mb-3 px-2">
+                  <img src={user.photoURL} className="w-8 h-8 rounded-full shadow-sm" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-700 truncate">{user.displayName}</p>
+                    <p className="text-xs text-slate-500 truncate">demo@company.com</p>
+                  </div>
+                </div>
+                <div className="px-2 py-2 bg-slate-100 rounded text-xs text-slate-500 leading-relaxed border border-slate-200">
+                   ※これはデモ版です。<br/>データはブラウザ内にのみ保存されます。
+                </div>
+              </div>
+            </aside>
+          );
+        }
+
+        function ListView({ prompts, category, searchTerm, setSearchTerm, user, onCreate, onEdit, onDelete, onRun, onToggleFavorite }) {
+          const filtered = prompts.filter(p => {
+            if (category === 'favorites') {
+              if (!p.favoritedBy?.includes(user.uid)) return false;
+            } else if (category !== 'all') {
+              if (p.category !== category) return false;
+            }
+            const searchLower = searchTerm.toLowerCase();
+            return (
+              p.title?.toLowerCase().includes(searchLower) ||
+              p.content?.toLowerCase().includes(searchLower) ||
+              p.authorName?.toLowerCase().includes(searchLower)
+            );
+          });
+
+          const getCategoryInfo = (id) => CATEGORIES.find(c => c.id === id) || { label: '未分類', color: 'text-slate-500 bg-slate-100', icon: Box };
+
+          return (
+            <div className="max-w-7xl mx-auto">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                    {category === 'all' ? <Layout className="w-6 h-6 text-slate-400"/> : 
+                     category === 'favorites' ? <Heart className="w-6 h-6 text-pink-500 fill-pink-500"/> : 
+                     (() => {
+                        const Cat = CATEGORIES.find(c => c.id === category);
+                        const Icon = Cat ? Cat.icon : Box;
+                        return <Icon className="w-6 h-6 text-slate-600"/>;
+                     })()
+                    }
+                    {category === 'all' ? 'すべてのプロンプト' : 
+                     category === 'favorites' ? 'お気に入り' : 
+                     CATEGORIES.find(c => c.id === category)?.label}
+                  </h2>
+                  <p className="text-slate-500 text-sm mt-1 ml-8">{filtered.length}件のテンプレートが見つかりました</p>
+                </div>
+                <div className="flex gap-3 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:w-64">
+                    <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
+                    <input 
+                      type="text" 
+                      placeholder="キーワード検索..." 
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
+                    />
+                  </div>
+                  <Button onClick={onCreate} className="shrink-0"><Plus className="w-4 h-4" /> 新規作成</Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+                {filtered.map(prompt => {
+                  const catInfo = getCategoryInfo(prompt.category);
+                  const isFav = prompt.favoritedBy?.includes(user.uid);
+                  const CatIcon = catInfo.icon;
+
+                  return (
+                    <Card key={prompt.id} className="flex flex-col h-full group relative hover:border-indigo-300 hover:shadow-md transition-all duration-300">
+                      <div className="flex justify-between items-start mb-3">
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${catInfo.color}`}>
+                          <CatIcon className="w-3 h-3" /> {catInfo.label}
+                        </span>
+                        <button 
+                          onClick={(e) => onToggleFavorite(e, prompt.id)}
+                          className={`p-1.5 rounded-full transition ${isFav ? 'text-pink-500 bg-pink-50' : 'text-slate-300 hover:bg-slate-100'}`}
+                        >
+                          <Heart className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
+                        </button>
+                      </div>
+
+                      <div className="flex-1 mb-4 cursor-pointer" onClick={() => onRun(prompt)}>
+                        <h3 className="font-bold text-lg text-slate-800 mb-2 line-clamp-1 group-hover:text-indigo-600 transition">{prompt.title}</h3>
+                        <p className="text-sm text-slate-500 font-mono bg-slate-50 p-3 rounded-lg border border-slate-100 line-clamp-3 leading-relaxed">
+                          {prompt.content}
+                        </p>
+                      </div>
+
+                      <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1.5" title="作成者">
+                            {prompt.authorPhoto ? (
+                              <img src={prompt.authorPhoto} className="w-5 h-5 rounded-full" />
+                            ) : <User className="w-4 h-4" />}
+                            <span className="max-w-[80px] truncate">{prompt.authorName}</span>
+                          </div>
+                          <div className="flex items-center gap-1" title="これまでの使用回数">
+                            <BarChart2 className="w-3.5 h-3.5 text-slate-400" />
+                            <span className="font-medium">{prompt.usageCount || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1" title="更新日">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            <span>{new Date(prompt.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                          <button onClick={() => onEdit(prompt)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded"><Edit3 className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => onDelete(prompt.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+              
+              {filtered.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-slate-300">
+                  <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                    <Search className="w-8 h-8 text-slate-300" />
+                  </div>
+                  <p className="text-slate-500 font-medium">条件に合うプロンプトが見つかりません</p>
+                  <p className="text-slate-400 text-sm mt-1">検索条件を変えるか、新しく作成してください</p>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        function EditView({ initialData, onSave, onCancel }) {
+          const [formData, setFormData] = useState({
+            title: initialData?.title || '',
+            category: initialData?.category || 'marketing',
+            content: initialData?.content || ''
+          });
+
+          const handleSubmit = () => {
+            if (!formData.title || !formData.content) return alert("タイトルと内容は必須です");
+            onSave({ ...initialData, ...formData });
+          };
+
+          return (
+            <div className="max-w-3xl mx-auto animate-fade-in">
+              <button onClick={onCancel} className="mb-4 text-sm text-slate-500 hover:text-indigo-600 flex items-center gap-1 group">
+                <Layout className="w-4 h-4 group-hover:-translate-x-1 transition" /> 一覧に戻る
+              </button>
+              
+              <Card className="p-8 border-t-4 border-t-indigo-500">
+                <h2 className="text-2xl font-bold mb-8 flex items-center gap-2">
+                  {initialData?.id ? <Edit3 className="w-6 h-6 text-indigo-500"/> : <Plus className="w-6 h-6 text-indigo-500"/>}
+                  {initialData?.id ? 'プロンプトを編集' : '新規プロンプト作成'}
+                </h2>
+                
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">カテゴリ</label>
+                        <div className="relative">
+                          <select 
+                            className="w-full appearance-none border border-slate-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm pr-8"
+                            value={formData.category}
+                            onChange={e => setFormData({...formData, category: e.target.value})}
+                          >
+                            {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                          </select>
+                          <Briefcase className="absolute right-3 top-3 w-4 h-4 text-slate-400 pointer-events-none"/>
+                        </div>
+                      </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">タイトル</label>
+                    <input 
+                      className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+                      value={formData.title}
+                      onChange={e => setFormData({...formData, title: e.target.value})}
+                      placeholder="例: クライアント向け謝罪メール案"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2 flex justify-between items-center">
+                      <span>プロンプト内容</span>
+                      <span className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-1 rounded font-mono">
+                        変数記法: {'{{変数名}}'}
+                      </span>
+                    </label>
+                    <textarea 
+                      rows={12}
+                      className="w-full border border-slate-300 rounded-lg p-4 font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed"
+                      value={formData.content}
+                      onChange={e => setFormData({...formData, content: e.target.value})}
+                      placeholder="ここにプロンプトを入力してください...&#10;&#10;例:&#10;あなたはプロのマーケターです。以下の製品のキャッチコピーを考えてください。&#10;&#10;製品名: {{製品名}}&#10;ターゲット層: {{ターゲット}}"
+                    />
+                    <p className="text-xs text-slate-400 mt-2 text-right">Markdown記法が使えます</p>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                    <Button variant="secondary" onClick={onCancel}>キャンセル</Button>
+                    <Button onClick={handleSubmit}><Save className="w-4 h-4" /> 保存する</Button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          );
+        }
+
+        function RunView({ prompt, onBack, showToast }) {
+          const variables = useMemo(() => {
+            if (!prompt || !prompt.content) return [];
+            const regex = /{{(.*?)}}/g;
+            const vars = new Set();
+            let match;
+            while ((match = regex.exec(prompt.content)) !== null) {
+              vars.add(match[1]);
+            }
+            return Array.from(vars);
+          }, [prompt?.content]);
+
+          const [values, setValues] = useState({});
+          const [result, setResult] = useState(prompt?.content || '');
+
+          useEffect(() => {
+            if (!prompt || !prompt.content) return;
+            let text = prompt.content;
+            variables.forEach(v => {
+              text = text.split(`{{${v}}}`).join(values[v] || `[${v}]`);
+            });
+            setResult(text);
+          }, [values, prompt?.content, variables]);
+
+          const copyToClipboard = () => {
+            navigator.clipboard.writeText(result);
+            showToast('コピーしました！');
+          };
+
+          const getCategoryInfo = (id) => CATEGORIES.find(c => c.id === id);
+          const cat = getCategoryInfo(prompt?.category);
+
+          if (!prompt) {
+            return (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-slate-500">プロンプトが見つかりません</p>
+              </div>
+            );
+          }
+
+          return (
+            <div className="h-[calc(100vh-6rem)] flex flex-col max-w-6xl mx-auto animate-fade-in">
+              <div className="flex items-center gap-2 mb-4">
+                <button onClick={onBack} className="text-slate-500 hover:text-indigo-600 group flex items-center gap-1">
+                  <Layout className="w-5 h-5 group-hover:-translate-x-1 transition" />
+                </button>
+                <span className="text-slate-300">/</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${cat?.color} flex items-center gap-1`}>
+                    {cat && (() => { const Icon = cat.icon; return <Icon className="w-3 h-3"/> })()}
+                    {cat?.label}
+                </span>
+                <h2 className="font-bold text-slate-700 truncate">{prompt.title}</h2>
+              </div>
+
+              <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
+                <div className="w-full lg:w-1/3 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
+                  <Card className="border-indigo-100 shadow-md">
+                    <div className="flex items-center gap-2 mb-4 text-indigo-900 font-bold border-b border-indigo-50 pb-2">
+                      <Edit3 className="w-4 h-4" /> 入力項目
+                    </div>
+                    {variables.length === 0 ? (
+                      <p className="text-sm text-slate-400 py-4 text-center bg-slate-50 rounded-lg">
+                        変数は設定されていません。<br/>そのままコピーできます。
+                      </p>
+                    ) : (
+                      <div className="space-y-5">
+                        {variables.map(v => (
+                          <div key={v}>
+                            <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">{v}</label>
+                            <input 
+                              className="w-full border border-slate-300 rounded-md p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm"
+                              placeholder={`${v}を入力...`}
+                              value={values[v] || ''}
+                              onChange={e => setValues({...values, [v]: e.target.value})}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+                  
+                  <div className="bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-5 rounded-xl shadow-lg mt-auto">
+                    <h4 className="font-bold mb-2 text-sm opacity-90 flex items-center gap-2">
+                      <Play className="w-4 h-4" /> 使い方ガイド
+                    </h4>
+                    <ul className="text-xs leading-relaxed opacity-80 space-y-1 list-disc list-inside">
+                      <li>左のフォームに変数を入力してください</li>
+                      <li>右側のプレビューがリアルタイムで更新されます</li>
+                      <li>完成したら「コピー」してAIやメールに貼り付け</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="w-full lg:w-2/3 flex flex-col shadow-xl rounded-xl overflow-hidden border border-slate-200 bg-white">
+                  <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+                    <span className="text-sm font-bold text-slate-600 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" /> 生成プレビュー
+                    </span>
+                    <button onClick={copyToClipboard} className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-4 py-2 rounded-md flex items-center gap-1.5 transition shadow-sm font-bold">
+                      <Copy className="w-3.5 h-3.5" /> 結果をコピー
+                    </button>
+                  </div>
+                  <textarea 
+                    className="flex-1 w-full p-6 font-mono text-sm text-slate-700 bg-white outline-none resize-none leading-loose selection:bg-indigo-100"
+                    value={result}
+                    readOnly
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // アプリをレンダリング
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
