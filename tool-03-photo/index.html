@@ -510,14 +510,20 @@
             fCtx.fillStyle = '#ffffff';
             fCtx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
 
-            const ratio = BASE_WIDTH / TRIM_CANVAS_W;
+            // トリミングキャンバスと最終キャンバスは同じサイズ（800x450 = 16:9）なので、比率は1:1
+            // トリミングキャンバス上の画像の位置とサイズをそのまま最終キャンバスに描画
+            const drawX = trimState.x;
+            const drawY = trimState.y;
+            const drawWidth = trimSourceImage.width * trimState.scale;
+            const drawHeight = trimSourceImage.height * trimState.scale;
             
+            // 16:9の領域（0, 0, 800, 450）に画像を描画
             fCtx.drawImage(
                 trimSourceImage,
-                trimState.x * ratio,
-                trimState.y * ratio,
-                trimSourceImage.width * trimState.scale * ratio,
-                trimSourceImage.height * trimState.scale * ratio
+                drawX,
+                drawY,
+                drawWidth,
+                drawHeight
             );
             
             const newImg = new Image();
