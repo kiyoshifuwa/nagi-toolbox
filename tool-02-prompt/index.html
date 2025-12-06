@@ -15,9 +15,6 @@
     <!-- Babel Standalone for JSX transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
     <style>
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
@@ -64,42 +61,77 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // Lucide icons as React components
-        const createIcon = (name) => {
+        // シンプルなSVGアイコンコンポーネント（Lucideの代わり）
+        const createIcon = (pathData) => {
             return (props) => {
-                const { className = '', ...restProps } = props;
-                return React.createElement('i', {
+                const { className = '', fill, ...restProps } = props;
+                const hasFill = className.includes('fill-') || fill;
+                return React.createElement('svg', {
                     ...restProps,
-                    'data-lucide': name,
-                    className: className
+                    className: className,
+                    fill: hasFill ? 'currentColor' : 'none',
+                    stroke: 'currentColor',
+                    strokeWidth: 2,
+                    strokeLinecap: 'round',
+                    strokeLinejoin: 'round',
+                    viewBox: '0 0 24 24',
+                    children: React.createElement('path', { d: pathData })
                 });
             };
         };
 
-        const Box = createIcon('box');
-        const Search = createIcon('search');
-        const Plus = createIcon('plus');
-        const Trash2 = createIcon('trash-2');
-        const Edit3 = createIcon('edit-3');
-        const Play = createIcon('play');
-        const Copy = createIcon('copy');
-        const Save = createIcon('save');
-        const X = createIcon('x');
-        const Layout = createIcon('layout');
-        const MessageSquare = createIcon('message-square');
-        const Users = createIcon('users');
-        const Heart = createIcon('heart');
-        const Calendar = createIcon('calendar');
-        const BarChart2 = createIcon('bar-chart-2');
-        const Briefcase = createIcon('briefcase');
-        const Code = createIcon('code');
-        const PenTool = createIcon('pen-tool');
-        const Globe = createIcon('globe');
-        const Phone = createIcon('phone');
-        const Shield = createIcon('shield');
-        const User = createIcon('user');
-        const CheckCircle = createIcon('check-circle');
-        const Info = createIcon('info');
+        // Lucideアイコンのパスデータ（主要なアイコンのみ）
+        const iconPaths = {
+            box: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z',
+            search: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z M21 21l-4.35-4.35',
+            plus: 'M12 5v14 M5 12h14',
+            'trash-2': 'M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M10 11v6 M14 11v6',
+            'edit-3': 'M12 20h9 M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z',
+            play: 'M5 3l14 9-14 9V3z',
+            copy: 'M8 8v8h8V8H8z M4 4v12h4V4H4z',
+            save: 'M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z M17 21v-8H7v8 M7 3v5h8',
+            x: 'M18 6L6 18 M6 6l12 12',
+            layout: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10',
+            'message-square': 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
+            users: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
+            heart: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
+            calendar: 'M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18',
+            'bar-chart-2': 'M18 20V10 M12 20V4 M6 20v-6',
+            briefcase: 'M21 13.255A23.931 23.931 0 0 1 12 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2m4 6h.01M5 20h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z',
+            code: 'M16 18l6-6-6-6 M8 6l-6 6 6 6',
+            'pen-tool': 'M12 19l7-7 3 3-7 7-3-3z M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z M2 2l7.586 7.586 M13 11l7 7',
+            globe: 'M21 12a9 9 0 1 1-6.219-8.56',
+            phone: 'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z',
+            shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+            user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+            'check-circle': 'M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4L12 14.01l-3-3',
+            info: 'M12 16v-4 M12 8h.01'
+        };
+
+        const Box = createIcon(iconPaths.box);
+        const Search = createIcon(iconPaths.search);
+        const Plus = createIcon(iconPaths.plus);
+        const Trash2 = createIcon(iconPaths['trash-2']);
+        const Edit3 = createIcon(iconPaths['edit-3']);
+        const Play = createIcon(iconPaths.play);
+        const Copy = createIcon(iconPaths.copy);
+        const Save = createIcon(iconPaths.save);
+        const X = createIcon(iconPaths.x);
+        const Layout = createIcon(iconPaths.layout);
+        const MessageSquare = createIcon(iconPaths['message-square']);
+        const Users = createIcon(iconPaths.users);
+        const Heart = createIcon(iconPaths.heart);
+        const Calendar = createIcon(iconPaths.calendar);
+        const BarChart2 = createIcon(iconPaths['bar-chart-2']);
+        const Briefcase = createIcon(iconPaths.briefcase);
+        const Code = createIcon(iconPaths.code);
+        const PenTool = createIcon(iconPaths['pen-tool']);
+        const Globe = createIcon(iconPaths.globe);
+        const Phone = createIcon(iconPaths.phone);
+        const Shield = createIcon(iconPaths.shield);
+        const User = createIcon(iconPaths.user);
+        const CheckCircle = createIcon(iconPaths['check-circle']);
+        const Info = createIcon(iconPaths.info);
 
         // --- モックデータ (初期データ) ---
         const INITIAL_PROMPTS = [
@@ -225,21 +257,7 @@
             }
           }, [prompts]);
 
-          // アイコンを再描画（viewとcurrentCategoryが変更されたときのみ）
-          useEffect(() => {
-            if (window.lucide) {
-              // requestAnimationFrameを使用してReactのレンダリング後に実行
-              const timeoutId = setTimeout(() => {
-                try {
-                  window.lucide.createIcons();
-                } catch (e) {
-                  // エラーを無視（DOMがまだ準備できていない場合）
-                  console.warn('Lucide icons creation failed:', e);
-                }
-              }, 150);
-              return () => clearTimeout(timeoutId);
-            }
-          }, [view, currentCategory]);
+          // Lucideアイコンの呼び出しは不要（SVGアイコンを直接使用）
 
           const showToast = (msg) => {
             setToast(msg);
