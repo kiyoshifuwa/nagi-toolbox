@@ -248,6 +248,38 @@
                         <input type="file" id="customStickerInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-pink-100 file:text-pink-600 hover:file:bg-pink-200 cursor-pointer"/>
                     </div>
 
+                    <!-- 吹き出しセクション -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-bold text-amber-500 mb-3 ml-1 flex items-center gap-2">
+                            <span>💬</span> 吹き出し
+                        </h4>
+                        <div class="grid grid-cols-4 gap-3 mb-4" id="fukidashi-shapes">
+                            <!-- 吹き出しの形はJavaScriptで動的に追加 -->
+                        </div>
+                        <!-- 色選択UI（吹き出しを選んだ後に表示） -->
+                        <div id="fukidashi-color-picker" class="hidden bg-amber-50 p-4 rounded-2xl border border-amber-100">
+                            <label class="block text-amber-600 font-bold mb-2 text-sm">色を選んでね</label>
+                            <div class="flex gap-3 overflow-x-auto pb-2">
+                                <button onclick="selectFukidashiColor('#ffffff')" class="w-10 h-10 rounded-full bg-white border-2 border-gray-200 flex-shrink-0 shadow-sm hover:scale-110 transition"></button>
+                                <button onclick="selectFukidashiColor('#fef3c7')" class="w-10 h-10 rounded-full bg-yellow-100 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <button onclick="selectFukidashiColor('#fcd34d')" class="w-10 h-10 rounded-full bg-yellow-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <button onclick="selectFukidashiColor('#f472b6')" class="w-10 h-10 rounded-full bg-pink-400 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <button onclick="selectFukidashiColor('#93c5fd')" class="w-10 h-10 rounded-full bg-blue-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <button onclick="selectFukidashiColor('#86efac')" class="w-10 h-10 rounded-full bg-green-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <button onclick="selectFukidashiColor('#c084fc')" class="w-10 h-10 rounded-full bg-purple-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <button onclick="selectFukidashiColor('#fca5a5')" class="w-10 h-10 rounded-full bg-red-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                <div class="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white bg-white">
+                                    <input type="color" id="fukidashi-custom-color" class="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] p-0 border-0 cursor-pointer opacity-0 z-10" onchange="selectFukidashiColor(this.value)">
+                                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <h4 class="text-sm font-bold text-gray-400 mb-3 ml-1">絵文字スタンプ</h4>
                     <div class="flex flex-wrap gap-3">
                         <button onclick="addSticker('💖')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">💖</button>
@@ -344,6 +376,19 @@
         canvas.height = BASE_HEIGHT;
         let currentColor = '#f472b6';
         let confettiParticles = [];
+        let selectedFukidashiPath = null; // 選択された吹き出しのパス
+        
+        // 吹き出しのリスト
+        const fukidashiList = [
+            { name: '01', path: 'images/stamp/fukidashi/01.svg' },
+            { name: '02', path: 'images/stamp/fukidashi/02.svg' },
+            { name: '03', path: 'images/stamp/fukidashi/03.svg' },
+            { name: '04', path: 'images/stamp/fukidashi/04.svg' },
+            { name: '05', path: 'images/stamp/fukidashi/05.svg' },
+            { name: '06', path: 'images/stamp/fukidashi/06.svg' },
+            { name: '07', path: 'images/stamp/fukidashi/07.svg' },
+            { name: '08', path: 'images/stamp/fukidashi/08.svg' }
+        ];
         
         // フレーム画像のリスト
         const frameList = [
@@ -393,8 +438,87 @@
             frameGrid.insertBefore(noneButton, frameGrid.firstChild);
         }
         
-        // ページ読み込み時にフレーム画像を読み込む
-        loadFrameImages(); 
+        // 吹き出しの形を読み込む
+        function loadFukidashiShapes() {
+            const shapesGrid = document.getElementById('fukidashi-shapes');
+            fukidashiList.forEach((fukidashi) => {
+                const button = document.createElement('button');
+                button.className = 'p-2 border-2 border-gray-100 rounded-2xl hover:border-amber-400 hover:shadow-md bg-white overflow-hidden relative group transition-all';
+                button.onclick = () => selectFukidashiShape(fukidashi.path);
+                
+                // SVGを読み込んでサムネイルとして表示
+                const img = document.createElement('img');
+                img.src = fukidashi.path;
+                img.className = 'w-full h-16 object-contain group-hover:scale-105 transition';
+                img.alt = `吹き出し ${fukidashi.name}`;
+                
+                button.appendChild(img);
+                shapesGrid.appendChild(button);
+            });
+        }
+        
+        // 吹き出しの形を選択
+        function selectFukidashiShape(path) {
+            selectedFukidashiPath = path;
+            // 色選択UIを表示
+            document.getElementById('fukidashi-color-picker').classList.remove('hidden');
+        }
+        
+        // 吹き出しの色を選択して追加
+        function selectFukidashiColor(color) {
+            if (!selectedFukidashiPath) return;
+            if (!originalImage) { 
+                alert('先に写真をアップロードしてね！'); 
+                return; 
+            }
+            
+            // SVGを読み込んで色を変更
+            fetch(selectedFukidashiPath)
+                .then(response => response.text())
+                .then(svgText => {
+                    // SVGの色を変更
+                    let coloredSvg = svgText;
+                    
+                    // CSSクラス内のfillを変更（.cls-1のfillを変更）
+                    coloredSvg = coloredSvg.replace(/(\.cls-1\s*\{[^}]*fill:\s*)#[0-9a-fA-F]{3,6}([^}]*\})/gi, `$1${color}$2`);
+                    
+                    // CSSクラス内のstrokeを変更（.cls-2のstrokeを変更）
+                    coloredSvg = coloredSvg.replace(/(\.cls-2\s*\{[^}]*stroke:\s*)#[0-9a-fA-F]{3,6}([^}]*\})/gi, `$1${color}$2`);
+                    
+                    // インラインのfill属性を変更
+                    coloredSvg = coloredSvg.replace(/fill="[^"]*"/g, `fill="${color}"`);
+                    
+                    // インラインのstroke属性を変更（白い線を色に変更）
+                    coloredSvg = coloredSvg.replace(/stroke="[^"]*"/g, `stroke="${color}"`);
+                    
+                    // SVGを画像に変換
+                    const img = new Image();
+                    const blob = new Blob([coloredSvg], { type: 'image/svg+xml;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    img.onload = () => {
+                        addImageSticker(img);
+                        URL.revokeObjectURL(url);
+                        // 色選択UIを非表示に
+                        document.getElementById('fukidashi-color-picker').classList.add('hidden');
+                        selectedFukidashiPath = null;
+                    };
+                    img.onerror = () => {
+                        console.error('画像の読み込みエラー');
+                        alert('吹き出しの読み込みに失敗しました');
+                        URL.revokeObjectURL(url);
+                    };
+                    img.src = url;
+                })
+                .catch(error => {
+                    console.error('吹き出しの読み込みエラー:', error);
+                    alert('吹き出しの読み込みに失敗しました');
+                });
+        }
+        
+        // ページ読み込み時にフレーム画像と吹き出しを読み込む
+        loadFrameImages();
+        loadFukidashiShapes(); 
 
         /* =========================================
            トリミング関連
