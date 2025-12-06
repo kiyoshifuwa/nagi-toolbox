@@ -216,10 +216,6 @@
             } else {
               setPrompts(INITIAL_PROMPTS);
             }
-            // Lucide iconsを初期化
-            if (window.lucide) {
-              window.lucide.createIcons();
-            }
           }, []);
 
           // データ変更時にローカルストレージへ保存
@@ -227,18 +223,23 @@
             if (prompts.length > 0) {
               localStorage.setItem('demo_prompts', JSON.stringify(prompts));
             }
-            // アイコンを再描画
-            if (window.lucide) {
-              setTimeout(() => window.lucide.createIcons(), 100);
-            }
           }, [prompts]);
 
-          // アイコンを再描画
+          // アイコンを再描画（viewとcurrentCategoryが変更されたときのみ）
           useEffect(() => {
             if (window.lucide) {
-              setTimeout(() => window.lucide.createIcons(), 100);
+              // requestAnimationFrameを使用してReactのレンダリング後に実行
+              const timeoutId = setTimeout(() => {
+                try {
+                  window.lucide.createIcons();
+                } catch (e) {
+                  // エラーを無視（DOMがまだ準備できていない場合）
+                  console.warn('Lucide icons creation failed:', e);
+                }
+              }, 150);
+              return () => clearTimeout(timeoutId);
             }
-          });
+          }, [view, currentCategory]);
 
           const showToast = (msg) => {
             setToast(msg);
