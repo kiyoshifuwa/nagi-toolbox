@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字数カウンター - nagi toolbox</title>
+</head>
+<body>
+    <a href="../index.html">← TOPに戻る</a>
+    <h2>文字数カウンター</h2>
+    <textarea id="textInput" rows="5" cols="40" placeholder="ここに文字を入力"></textarea>
+    <p>文字数: <span id="count">0</span> 文字</p>
+
+    <script>
+        // 簡単な文字数カウントのプログラム
+        const input = document.getElementById('textInput');
+        const count = document.getElementById('count');
+        input.addEventListener('input', () => {
+            count.textContent = input.value.length;
+        });
+    </script>
+</body>
+</html>
