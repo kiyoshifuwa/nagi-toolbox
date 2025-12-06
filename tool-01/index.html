@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日付・期間計算機</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: M PLUS Rounded 1c を追加 -->
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'M PLUS Rounded 1c', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            background-color: #e0f2fe; /* 薄い水色の背景 */
+        }
+        /* モバイルでのタップ領域を確保 */
+        button, input, select {
+            touch-action: manipulation;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(186, 230, 253, 0.5); /* 水色のボーダー */
+            box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.15), 0 8px 10px -6px rgba(14, 165, 233, 0.1); /* 柔らかい水色の影 */
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4 flex justify-center items-start">
+
+    <div class="w-full max-w-md space-y-6">
+        
+        <!-- ヘッダー -->
+        <div class="text-center space-y-2">
+            <h1 class="text-3xl font-bold text-sky-700 flex items-center justify-center gap-2">
+                <i data-lucide="calendar-heart" class="w-10 h-10 text-sky-500"></i>
+                日付・期間計算機
+            </h1>
+            <p class="text-sky-600 text-sm font-medium">契約日や期限を一瞬で算出♪</p>
+        </div>
+
+        <!-- メイン計算カード -->
+        <div class="glass-panel rounded-3xl p-6 space-y-6 bg-white/90">
+            
+            <!-- 基準日 -->
+            <div class="space-y-2">
+                <label class="text-sm font-bold text-sky-700 flex items-center gap-2">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-sky-500"></i>
+                    基準日 (スタート)
+                    <button onclick="setToday()" class="text-xs bg-sky-100 text-sky-600 px-3 py-1 rounded-full hover:bg-sky-200 transition font-medium">今日にする</button>
+                </label>
+                <input type="date" id="baseDate" class="w-full p-3 text-lg border-2 border-sky-200 rounded-2xl focus:ring-4 focus:ring-sky-200 focus:border-sky-400 outline-none transition bg-sky-50/50 text-sky-800 font-bold">
+            </div>
+
+            <!-- クイックアクション -->
+            <div class="space-y-3">
+                <label class="text-xs font-bold text-sky-500 uppercase tracking-wider flex items-center gap-1">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    よく使う計算
+                </label>
+                <div class="grid grid-cols-3 gap-3">
+                    <button onclick="quickSet(90, 'days', 1)" class="bg-sky-100 hover:bg-sky-200 text-sky-700 py-3 px-2 rounded-2xl text-sm font-bold transition border-2 border-sky-200 flex flex-col items-center gap-1">
+                        <i data-lucide="calendar-plus" class="w-5 h-5 mb-1"></i>
+                        +90日後
+                    </button>
+                    <button onclick="quickSet(3, 'months', -1)" class="bg-blue-100 hover:bg-blue-200 text-blue-700 py-3 px-2 rounded-2xl text-sm font-bold transition border-2 border-blue-200 flex flex-col items-center gap-1">
+                         <i data-lucide="calendar-minus" class="w-5 h-5 mb-1"></i>
+                        -3ヶ月前
+                    </button>
+                    <button onclick="quickSet(1, 'months', 1)" class="bg-cyan-100 hover:bg-cyan-200 text-cyan-700 py-3 px-2 rounded-2xl text-sm font-bold transition border-2 border-cyan-200 flex flex-col items-center gap-1">
+                        <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
+                        +1ヶ月後
+                    </button>
+                </div>
+            </div>
+
+            <hr class="border-sky-100/50">
+
+            <!-- カスタム計算 -->
+            <div class="space-y-3">
+                <label class="text-sm font-bold text-sky-700 flex items-center gap-2">
+                    <i data-lucide="settings-2" class="w-4 h-4 text-sky-500"></i>
+                    カスタム期間設定
+                </label>
+                <div class="flex items-center gap-3">
+                    <!-- 方向 (前/後) -->
+                    <div class="relative flex bg-sky-100/50 p-1 rounded-2xl border-2 border-sky-200">
+                        <button id="dirMinus" onclick="setDirection(-1)" class="px-4 py-2 rounded-xl text-sm font-bold text-sky-500 transition hover:bg-white/80 hover:text-sky-600">- 前</button>
+                        <button id="dirPlus" onclick="setDirection(1)" class="px-4 py-2 rounded-xl text-sm font-bold bg-white shadow-sm text-sky-600 transition border-2 border-sky-100">+ 後</button>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <input type="number" id="amount" value="90" class="flex-1 p-3 text-center text-xl font-bold border-2 border-sky-200 rounded-2xl focus:ring-4 focus:ring-sky-200 focus:border-sky-400 outline-none text-sky-800 bg-sky-50/50">
+                    <select id="unit" class="w-28 p-3 bg-white border-2 border-sky-200 rounded-2xl focus:ring-4 focus:ring-sky-200 focus:border-sky-400 outline-none text-sky-700 font-bold bg-sky-50/50">
+                        <option value="days">日</option>
+                        <option value="weeks">週</option>
+                        <option value="months">ヶ月</option>
+                        <option value="years">年</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 結果表示エリア -->
+        <div class="bg-gradient-to-br from-sky-400 to-blue-500 text-white shadow-lg shadow-sky-200 rounded-3xl p-6 relative overflow-hidden border-4 border-sky-300/50">
+            <div class="absolute -top-4 -right-4 p-4 opacity-20 rotate-12">
+                <i data-lucide="gift" class="w-32 h-32"></i>
+            </div>
+            
+            <p class="text-sky-100 text-sm mb-2 font-bold flex items-center gap-1">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                計算結果
+            </p>
+            <div class="space-y-1 relative z-10">
+                <div id="resultDate" class="text-4xl font-extrabold tracking-tight drop-shadow-sm">--/--/--</div>
+                <div class="flex items-center gap-2 text-sky-100 font-medium">
+                    <span id="resultWeekday" class="text-lg">--曜日</span>
+                    <span class="text-sky-200">|</span>
+                    <span id="diffText" class="text-sm opacity-90 bg-sky-600/30 px-2 py-0.5 rounded-full">--</span>
+                </div>
+            </div>
+
+            <button onclick="copyResult()" class="mt-6 w-full flex items-center justify-center gap-2 bg-white text-sky-600 text-sm font-bold py-3 rounded-2xl transition hover:bg-sky-50 hover:shadow-md active:scale-95 border-2 border-sky-200">
+                <i data-lucide="copy" class="w-5 h-5"></i>
+                日付をコピーする
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // 初期化
+        lucide.createIcons();
+        
+        const baseDateEl = document.getElementById('baseDate');
+        const amountEl = document.getElementById('amount');
+        const unitEl = document.getElementById('unit');
+        const resultDateEl = document.getElementById('resultDate');
+        const resultWeekdayEl = document.getElementById('resultWeekday');
+        const diffTextEl = document.getElementById('diffText');
+        
+        let currentDirection = 1; // 1 = future, -1 = past
+
+        // 今日を設定
+        function setToday() {
+            const today = new Date();
+            baseDateEl.value = today.toISOString().split('T')[0];
+            calculate();
+        }
+
+        // 方向設定
+        function setDirection(dir) {
+            currentDirection = dir;
+            
+            const btnPlus = document.getElementById('dirPlus');
+            const btnMinus = document.getElementById('dirMinus');
+
+            if (dir === 1) {
+                btnPlus.className = "px-4 py-2 rounded-xl text-sm font-bold bg-white shadow-sm text-sky-600 transition border-2 border-sky-100";
+                btnMinus.className = "px-4 py-2 rounded-xl text-sm font-bold text-sky-500 transition hover:bg-white/80 hover:text-sky-600";
+            } else {
+                btnPlus.className = "px-4 py-2 rounded-xl text-sm font-bold text-sky-500 transition hover:bg-white/80 hover:text-sky-600";
+                btnMinus.className = "px-4 py-2 rounded-xl text-sm font-bold bg-white shadow-sm text-sky-600 transition border-2 border-sky-100";
+            }
+            calculate();
+        }
+
+        // クイック設定ボタン
+        function quickSet(amount, unit, direction) {
+            amountEl.value = amount;
+            unitEl.value = unit;
+            setDirection(direction);
+        }
+
+        // メイン計算ロジック
+        function calculate() {
+            if (!baseDateEl.value) return;
+
+            const base = new Date(baseDateEl.value);
+            const amount = parseInt(amountEl.value) || 0;
+            const unit = unitEl.value;
+            
+            const target = new Date(base);
+            const finalAmount = amount * currentDirection;
+
+            // 計算処理
+            switch(unit) {
+                case 'days':
+                    target.setDate(base.getDate() + finalAmount);
+                    break;
+                case 'weeks':
+                    target.setDate(base.getDate() + (finalAmount * 7));
+                    break;
+                case 'months':
+                    target.setMonth(base.getMonth() + finalAmount);
+                    break;
+                case 'years':
+                    target.setFullYear(base.getFullYear() + finalAmount);
+                    break;
+            }
+
+            // 表示更新
+            const year = target.getFullYear();
+            const month = target.getMonth() + 1;
+            const day = target.getDate();
+            const weekday = ['日', '月', '火', '水', '木', '金', '土'][target.getDay()];
+
+            // 日本語の日付フォーマット
+            resultDateEl.innerText = `${year}年${month}月${day}日`;
+            resultWeekdayEl.innerText = `${weekday}曜日`;
+
+            // 基準日からの説明テキスト
+            const dirText = currentDirection === 1 ? '後' : '前';
+            let unitText = '';
+            if (unit === 'days') unitText = '日';
+            if (unit === 'weeks') unitText = '週間';
+            if (unit === 'months') unitText = 'ヶ月';
+            if (unit === 'years') unitText = '年';
+
+            diffTextEl.innerText = `基準日から ${amount}${unitText}${dirText}`;
+        }
+
+        // クリップボードにコピー
+        function copyResult() {
+            const text = resultDateEl.innerText + ` (${resultWeekdayEl.innerText})`;
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy'); // execCommand is used for iframe compatibility
+            document.body.removeChild(textArea);
+            
+            // コピー完了の演出
+            const btn = document.querySelector('button[onclick="copyResult()"]');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i> コピーしました!`;
+            lucide.createIcons();
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                lucide.createIcons();
+            }, 1500);
+        }
+
+        // イベントリスナー
+        baseDateEl.addEventListener('change', calculate);
+        amountEl.addEventListener('input', calculate);
+        unitEl.addEventListener('change', calculate);
+
+        // 初期実行
+        setToday();
+
+    </script>
+</body>
+</html>
