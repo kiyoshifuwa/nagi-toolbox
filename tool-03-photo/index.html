@@ -196,14 +196,8 @@
                         <p class="text-xs text-gray-500 mt-1">※中央が透明なPNG画像を選ぶと綺麗に合成できます。</p>
                     </div>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <button onclick="setFrame('none')" class="frame-btn p-3 border-2 border-gray-200 rounded-lg hover:border-indigo-500 text-sm font-bold bg-white">🚫 なし</button>
-                        <button onclick="setFrame('white')" class="frame-btn p-3 border-2 border-gray-200 rounded-lg hover:border-indigo-500 text-sm font-bold bg-white">⬜ シンプル</button>
-                        <button onclick="setFrame('confetti')" class="frame-btn p-3 border-2 border-yellow-200 rounded-lg hover:border-yellow-500 text-sm font-bold bg-yellow-50 text-yellow-700">🎉 紙吹雪</button>
-                        <button onclick="setFrame('polaroid')" class="frame-btn p-3 border-2 border-gray-200 rounded-lg hover:border-indigo-500 text-sm font-bold bg-yellow-50 text-yellow-800">📷 ポラロイド</button>
-                        <button onclick="setFrame('pink')" class="frame-btn p-3 border-2 border-pink-200 rounded-lg hover:border-pink-500 text-sm font-bold bg-pink-50 text-pink-600">💖 ピンク</button>
-                        <button onclick="setFrame('cinema')" class="frame-btn p-3 border-2 border-gray-400 rounded-lg hover:border-gray-800 text-sm font-bold bg-gray-800 text-white">🎬 シネマ</button>
-                        <button onclick="setFrame('neon')" class="frame-btn p-3 border-2 border-purple-400 rounded-lg hover:border-purple-600 text-sm font-bold bg-black text-purple-300">💜 ネオン</button>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="frame-grid">
+                        <!-- フレーム画像はJavaScriptで動的に追加 -->
                     </div>
                 </div>
 
@@ -275,6 +269,7 @@
         let originalImage = null; // 加工用画像
         let frameType = 'none';
         let customFrameImg = null; // カスタムフレーム画像データ
+        let frameImages = {}; // フレーム画像を保存するオブジェクト
         
         let objects = [];
         let selectedObject = null;
@@ -286,7 +281,57 @@
         canvas.width = BASE_WIDTH;
         canvas.height = BASE_HEIGHT;
         let currentColor = '#f472b6';
-        let confettiParticles = []; 
+        let confettiParticles = [];
+        
+        // フレーム画像のリスト
+        const frameList = [
+            { name: 'Buff the Team', path: 'images/frame/Buff the Team.png' },
+            { name: 'Get Things Done', path: 'images/frame/Get Things Done.png' },
+            { name: 'More and Better', path: 'images/frame/More and Better.png' },
+            { name: '紙吹雪', path: 'images/frame/紙吹雪.png' }
+        ];
+        
+        // フレーム画像を読み込む
+        function loadFrameImages() {
+            const frameGrid = document.getElementById('frame-grid');
+            frameList.forEach((frame, index) => {
+                const img = new Image();
+                img.onload = () => {
+                    frameImages[frame.path] = img;
+                };
+                img.src = frame.path;
+                
+                // フレーム選択ボタンを作成
+                const button = document.createElement('button');
+                button.className = 'frame-btn p-3 border-2 border-gray-200 rounded-lg hover:border-indigo-500 text-sm font-bold bg-white overflow-hidden relative group';
+                button.onclick = () => setFrame(frame.path);
+                
+                // サムネイル画像を表示
+                const thumbnail = document.createElement('img');
+                thumbnail.src = frame.path;
+                thumbnail.className = 'w-full h-20 object-contain mb-2';
+                thumbnail.alt = frame.name;
+                
+                // フレーム名を表示
+                const label = document.createElement('div');
+                label.className = 'text-xs text-gray-600 font-bold truncate';
+                label.textContent = frame.name;
+                
+                button.appendChild(thumbnail);
+                button.appendChild(label);
+                frameGrid.appendChild(button);
+            });
+            
+            // 「なし」ボタンを追加
+            const noneButton = document.createElement('button');
+            noneButton.className = 'frame-btn p-3 border-2 border-gray-200 rounded-lg hover:border-indigo-500 text-sm font-bold bg-white';
+            noneButton.onclick = () => setFrame('none');
+            noneButton.innerHTML = '🚫 なし';
+            frameGrid.insertBefore(noneButton, frameGrid.firstChild);
+        }
+        
+        // ページ読み込み時にフレーム画像を読み込む
+        loadFrameImages(); 
 
         /* =========================================
            トリミング関連
@@ -581,73 +626,14 @@
             const h = canvas.height;
             ctx.save();
             
-            if (frameType === 'custom' && customFrameImg) {
+            if (frameType === 'none') {
+                // フレームなし
+            } else if (frameType === 'custom' && customFrameImg) {
                 // カスタムフレームを描画（全体に引き伸ばす）
                 ctx.drawImage(customFrameImg, 0, 0, w, h);
-            } else if (frameType === 'white') {
-                ctx.lineWidth = 40;
-                ctx.strokeStyle = '#ffffff';
-                ctx.strokeRect(0, 0, w, h);
-            } else if (frameType === 'confetti') {
-                ctx.lineWidth = 30;
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-                ctx.strokeRect(15, 15, w-30, h-30);
-                confettiParticles.forEach(p => {
-                    const dx = p.x - w/2;
-                    const dy = p.y - h/2;
-                    if (Math.abs(dx) < w * 0.35 && Math.abs(dy) < h * 0.35) return;
-                    ctx.save();
-                    ctx.translate(p.x, p.y);
-                    ctx.rotate(p.rotation * Math.PI / 180);
-                    ctx.fillStyle = p.color;
-                    if (p.type === 'circle') {
-                        ctx.beginPath(); ctx.arc(0, 0, p.size/2, 0, Math.PI*2); ctx.fill();
-                    } else {
-                        ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-                    }
-                    ctx.restore();
-                });
-            } else if (frameType === 'polaroid') {
-                const bottomMargin = 120;
-                const sideMargin = 20;
-                const topMargin = 20;
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, w, topMargin);
-                ctx.fillRect(0, 0, sideMargin, h);
-                ctx.fillRect(w - sideMargin, 0, sideMargin, h);
-                ctx.fillRect(0, h - bottomMargin, w, bottomMargin);
-                ctx.fillStyle = '#555';
-                ctx.font = '24px sans-serif';
-                ctx.textAlign = 'right';
-                ctx.fillText('My Memories', w - 40, h - 30);
-            } else if (frameType === 'pink') {
-                ctx.lineWidth = 30;
-                ctx.strokeStyle = '#fbcfe8'; 
-                ctx.strokeRect(15, 15, w - 30, h - 30);
-                ctx.lineWidth = 4;
-                ctx.strokeStyle = '#ec4899'; 
-                ctx.setLineDash([15, 10]);
-                ctx.strokeRect(15, 15, w - 30, h - 30);
-            } else if (frameType === 'cinema') {
-                const stripHeight = 60;
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(0, 0, w, stripHeight);
-                ctx.fillRect(0, h - stripHeight, w, stripHeight);
-                ctx.fillStyle = '#ffffff';
-                for(let i=20; i<w; i+=60) {
-                    ctx.fillRect(i, 15, 30, 30);
-                    ctx.fillRect(i, h - 45, 30, 30);
-                }
-            } else if (frameType === 'neon') {
-                ctx.lineWidth = 10;
-                ctx.strokeStyle = '#c084fc'; 
-                ctx.shadowColor = '#d8b4fe';
-                ctx.shadowBlur = 20;
-                ctx.strokeRect(20, 20, w-40, h-40);
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(20, 20, w-40, h-40);
-                ctx.shadowBlur = 0; 
+            } else if (frameImages[frameType]) {
+                // フレーム画像を描画（全体に引き伸ばす）
+                ctx.drawImage(frameImages[frameType], 0, 0, w, h);
             }
             ctx.restore();
         }
@@ -733,9 +719,6 @@
 
         function setFrame(type) {
             frameType = type;
-            if (type === 'confetti') {
-                generateConfetti();
-            }
             draw();
         }
 
