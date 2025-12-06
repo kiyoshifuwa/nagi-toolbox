@@ -434,7 +434,11 @@
         }
 
         function ListView({ prompts, category, searchTerm, setSearchTerm, user, onCreate, onEdit, onDelete, onRun, onToggleFavorite }) {
-          const filtered = prompts.filter(p => {
+          // promptsが配列でない場合の安全チェック
+          const promptsArray = Array.isArray(prompts) ? prompts : [];
+          
+          const filtered = promptsArray.filter(p => {
+            if (!p) return false;
             if (category === 'favorites') {
               if (!p.favoritedBy?.includes(user.uid)) return false;
             } else if (category !== 'all') {
@@ -458,14 +462,18 @@
                     {category === 'all' ? <Layout className="w-6 h-6 text-slate-400"/> : 
                      category === 'favorites' ? <Heart className="w-6 h-6 text-pink-500 fill-pink-500"/> : 
                      (() => {
-                        const Cat = CATEGORIES.find(c => c.id === category);
-                        const Icon = Cat ? Cat.icon : Box;
-                        return <Icon className="w-6 h-6 text-slate-600"/>;
+                        try {
+                          const Cat = CATEGORIES.find(c => c.id === category);
+                          const Icon = Cat ? Cat.icon : Box;
+                          return <Icon className="w-6 h-6 text-slate-600"/>;
+                        } catch (e) {
+                          return <Box className="w-6 h-6 text-slate-600"/>;
+                        }
                      })()
                     }
                     {category === 'all' ? 'すべてのプロンプト' : 
                      category === 'favorites' ? 'お気に入り' : 
-                     CATEGORIES.find(c => c.id === category)?.label}
+                     (CATEGORIES.find(c => c.id === category)?.label || '未分類')}
                   </h2>
                   <p className="text-slate-500 text-sm mt-1 ml-8">{filtered.length}件のテンプレートが見つかりました</p>
                 </div>
