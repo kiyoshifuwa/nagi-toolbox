@@ -26,12 +26,12 @@
         }
     </script>
     <style>
-        /* キャンバスエリア - 4:3 */
+        /* キャンバスエリア - 16:9 */
         #canvas-container {
             width: 100%;
             max-width: 800px;
             margin: 0 auto;
-            aspect-ratio: 4 / 3;
+            aspect-ratio: 16 / 9;
             position: relative;
             overflow: hidden;
             border: 2px solid #818cf8;
@@ -101,7 +101,7 @@
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 animate-fade-in flex flex-col max-h-[90vh]">
             <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                位置とサイズを調整 (4:3)
+                位置とサイズを調整 (16:9)
             </h2>
             
             <div class="flex-1 min-h-0 flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden relative mb-4">
@@ -135,8 +135,8 @@
 
         <!-- メインキャンバスエリア -->
         <div id="canvas-container" class="mb-6 bg-white shadow-xl">
-            <!-- 800x600 (4:3) -->
-            <canvas id="photoCanvas" width="800" height="600"></canvas>
+            <!-- 800x450 (16:9) -->
+            <canvas id="photoCanvas" width="800" height="450"></canvas>
             
             <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-6 pointer-events-none">
                 <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
@@ -277,7 +277,7 @@
         let dragStart = { x: 0, y: 0 };
         
         const BASE_WIDTH = 800; 
-        const BASE_HEIGHT = 600; // 4:3
+        const BASE_HEIGHT = 450; // 16:9
         canvas.width = BASE_WIDTH;
         canvas.height = BASE_HEIGHT;
         let currentColor = '#f472b6';
@@ -343,8 +343,8 @@
         
         let trimSourceImage = null;
         let trimState = { scale: 1, x: 0, y: 0, isDragging: false, lastX: 0, lastY: 0 };
-        const TRIM_CANVAS_W = 600; 
-        const TRIM_CANVAS_H = 450; 
+        const TRIM_CANVAS_W = 800; 
+        const TRIM_CANVAS_H = 450; // 16:9 
 
         photoInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -437,8 +437,8 @@
                 trimSourceImage.height * trimState.scale
             );
 
-            // ガイド枠（4:3の枠線）
-            // ここではキャンバス全体が4:3なので枠線を表示
+            // ガイド枠（16:9の枠線）
+            // ここではキャンバス全体が16:9なので枠線を表示
             trimCtx.strokeStyle = '#6366f1';
             trimCtx.lineWidth = 2;
             trimCtx.strokeRect(0, 0, TRIM_CANVAS_W, TRIM_CANVAS_H);
