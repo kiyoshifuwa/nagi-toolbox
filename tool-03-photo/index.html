@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -432,6 +434,15 @@
                             <input type="text" id="text-input" placeholder="ここに入力してね" class="w-full p-4 border-2 border-amber-100 rounded-2xl focus:outline-none focus:border-amber-400 focus:bg-amber-50 transition text-lg font-bold text-gray-700">
                         </div>
                         
+                        <div>
+                            <label class="text-xs text-amber-500 font-bold block mb-2 pl-1">フォントをえらぶ</label>
+                            <div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+                                <button onclick="setTextFont('rounded')" id="font-btn-rounded" class="font-select-btn active px-4 py-2 rounded-xl border-2 border-amber-400 bg-amber-50 text-amber-700 font-bold text-sm hover:bg-amber-100 transition whitespace-nowrap" data-font="rounded">丸ゴシック</button>
+                                <button onclick="setTextFont('gothic')" id="font-btn-gothic" class="font-select-btn px-4 py-2 rounded-xl border-2 border-gray-200 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 transition whitespace-nowrap" data-font="gothic">ゴシック</button>
+                                <button onclick="setTextFont('mincho')" id="font-btn-mincho" class="font-select-btn px-4 py-2 rounded-xl border-2 border-gray-200 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 transition whitespace-nowrap" data-font="mincho">明朝体</button>
+                            </div>
+                        </div>
+                        
                             <div class="flex-1">
                             <label class="text-xs text-amber-500 font-bold block mb-2 pl-1">カラーをえらぶ</label>
                             <div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
@@ -509,6 +520,7 @@
         canvas.width = BASE_WIDTH;
         canvas.height = BASE_HEIGHT;
         let currentColor = '#f472b6';
+        let currentFont = 'rounded'; // 'rounded', 'gothic', 'mincho'
         let confettiParticles = []; 
         let selectedFukidashiPath = null; // 選択された吹き出しのパス
         
@@ -529,7 +541,8 @@
             { name: 'Buff the Team', path: 'images/frame/Buff the Team.png' },
             { name: 'Get Things Done', path: 'images/frame/Get Things Done.png' },
             { name: 'More and Better', path: 'images/frame/More and Better.png' },
-            { name: '紙吹雪', path: 'images/frame/紙吹雪.png' }
+            { name: '紙吹雪', path: 'images/frame/紙吹雪.png' },
+            { name: '新聞', path: 'images/frame/shinbun.png' }
         ];
         
         // フレーム画像を読み込む
@@ -938,8 +951,9 @@
                     // 中心を基準に描画
                     ctx.drawImage(obj.img, -w/2, -h/2, w, h);
                 } else if (obj.type === 'text') {
-                    // フォントも丸文字に変更
-                    ctx.font = `bold ${obj.fontSize}px "M PLUS Rounded 1c", sans-serif`;
+                    // フォントを選択されたものに変更
+                    const fontFamily = getFontFamily(obj.font || 'rounded');
+                    ctx.font = `bold ${obj.fontSize}px ${fontFamily}`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.lineJoin = 'round';
@@ -1080,12 +1094,45 @@
                 scale: 1.0,
                 rotation: 0,
                 fontSize: 80,
-                color: currentColor
+                color: currentColor,
+                font: currentFont
             };
             objects.push(obj);
             setSelectedObject(obj);
             draw();
             input.value = '';
+        }
+        
+        function setTextFont(font) {
+            currentFont = font;
+            // ボタンのスタイルを更新
+            document.querySelectorAll('.font-select-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-amber-400', 'bg-amber-50', 'text-amber-700');
+                btn.classList.add('border-gray-200', 'bg-white', 'text-gray-600');
+            });
+            const activeBtn = document.getElementById(`font-btn-${font}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'border-amber-400', 'bg-amber-50', 'text-amber-700');
+                activeBtn.classList.remove('border-gray-200', 'bg-white', 'text-gray-600');
+            }
+            // 選択中のテキストオブジェクトのフォントも更新
+            if (selectedObject && selectedObject.type === 'text') {
+                selectedObject.font = font;
+                draw();
+            }
+        }
+        
+        function getFontFamily(font) {
+            switch(font) {
+                case 'rounded':
+                    return '"M PLUS Rounded 1c", sans-serif';
+                case 'gothic':
+                    return '"Noto Sans JP", sans-serif';
+                case 'mincho':
+                    return '"Noto Serif JP", serif';
+                default:
+                    return '"M PLUS Rounded 1c", sans-serif';
+            }
         }
 
         function setTextColor(color) {
