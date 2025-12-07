@@ -48,19 +48,13 @@
     </script>
     <style>
         body {
-            /* 薄ピンク色ベース */
-            background-color: #FFF5FA;
-            
-            /* 雲みたいな模様：白くて丸いぼかしグラデーションを複数配置してふわふわ感を出す */
-            background-image: 
-                radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.9) 0%, transparent 25%),
-                radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.8) 0%, transparent 30%),
-                radial-gradient(circle at 50% 60%, rgba(255, 255, 255, 0.7) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.8) 0%, transparent 30%),
-                radial-gradient(circle at 10% 90%, rgba(255, 255, 255, 0.8) 0%, transparent 25%);
-            
+            /* 背景画像：比率を保ったまま横幅に合わせて、縦に繰り返し配置 */
+            background-image: url('bg.jpg');
+            background-size: 100% auto; /* 横幅100%、高さは自動で比率を保つ */
+            background-repeat: repeat-y; /* 縦に繰り返し */
+            background-position: top center;
             background-attachment: fixed; /* スクロールしても背景は動かないようにする */
-            background-size: cover;
+            background-color: #FFF5FA; /* フォールバック用の背景色 */
         }
         .card-hover {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
