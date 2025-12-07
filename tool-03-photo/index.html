@@ -183,7 +183,7 @@
             <p class="text-amber-600/80 font-bold mt-2 text-lg">フレームやスタンプでもっと盛り上げよう！</p>
         </header>
 
-        <div id="canvas-container" class="mb-8">
+        <div id="canvas-container" class="mb-8" onclick="handleCanvasContainerClick(event)">
             <canvas id="photoCanvas" width="800" height="450"></canvas>
             
             <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-6 pointer-events-none bg-white/50 backdrop-blur-sm">
@@ -461,11 +461,17 @@
             </div>
         </div>
 
-        <button onclick="downloadImage()" class="mt-8 w-full bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 text-white text-xl font-extrabold py-5 rounded-3xl shadow-xl hover:shadow-2xl btn-hover-pop transition relative overflow-hidden group">
-            <span class="relative z-10 flex items-center justify-center gap-2">
+        <button onclick="downloadImage()" class="mt-8 w-full bg-orange-500 text-white text-xl font-extrabold py-5 rounded-3xl shadow-xl hover:shadow-2xl hover:bg-orange-600 btn-hover-pop transition">
+            <span class="flex items-center justify-center gap-2">
                 画像を保存する (ダウンロード) 📥
             </span>
-            <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition duration-300"></div>
+        </button>
+        
+        <!-- スマホ用：別窓で画像を表示 -->
+        <button onclick="openImageInNewWindow()" class="mt-4 w-full bg-orange-500 text-white text-xl font-extrabold py-5 rounded-3xl shadow-xl hover:shadow-2xl hover:bg-orange-600 btn-hover-pop transition md:hidden">
+            <span class="flex items-center justify-center gap-2">
+                画像を保存する (スマホ) 📱
+            </span>
         </button>
 
         <div class="mt-8 text-center pb-10">
@@ -1167,6 +1173,7 @@
         function startDrag(e) {
             if (!originalImage && objects.length === 0) return;
             e.preventDefault();
+            e.stopPropagation(); // イベントの伝播を止める
             const p = getCanvasPoint(e);
             const hit = hitTest(p.x, p.y);
             if (hit) {
@@ -1180,6 +1187,15 @@
             } else {
                 setSelectedObject(null);
             }
+            draw();
+        }
+        
+        // キャンバスコンテナのクリックイベント（キャンバス外をクリックしたとき）
+        function handleCanvasContainerClick(e) {
+            // キャンバス自体がクリックされた場合は何もしない（startDragで処理される）
+            if (e.target === canvas) return;
+            // キャンバス外をクリックした場合は選択を解除
+            setSelectedObject(null);
             draw();
         }
 
@@ -1223,6 +1239,60 @@
             link.download = 'stakane-deco-v5.png'; // ファイル名も変更
             link.href = canvas.toDataURL('image/png');
             link.click();
+            selectedObject = currentSelection;
+            draw();
+        }
+        
+        // スマホ用：別窓で画像を表示
+        function openImageInNewWindow() {
+            if (!originalImage) {
+                alert("まずは写真をアップロードしてください！");
+                return;
+            }
+            const currentSelection = selectedObject;
+            selectedObject = null;
+            draw();
+            const dataUrl = canvas.toDataURL('image/png');
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>画像を保存</title>
+                    <style>
+                        body {
+                            margin: 0;
+                            padding: 20px;
+                            background: #f3f4f6;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            min-height: 100vh;
+                        }
+                        img {
+                            max-width: 100%;
+                            height: auto;
+                            border-radius: 12px;
+                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                        }
+                        p {
+                            margin-top: 20px;
+                            color: #6b7280;
+                            font-size: 14px;
+                            text-align: center;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <img src="${dataUrl}" alt="編集済み画像">
+                    <p>画像を長押しして保存してください</p>
+                </body>
+                </html>
+            `);
+            newWindow.document.close();
             selectedObject = currentSelection;
             draw();
         }
