@@ -238,17 +238,9 @@
                 </div>
 
                 <div id="tab-frame" class="tab-content hidden animate-fade-in">
-                    <div class="mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                        <label class="block text-blue-600 font-bold mb-2 text-sm flex items-center gap-2">
-                            <span>📁</span> オリジナルフレームを使う
-                        </label>
-                        <input type="file" id="customFrameInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-100 file:text-blue-600 hover:file:bg-blue-200 cursor-pointer"/>
-                        <p class="text-xs text-blue-400 mt-2 pl-2">※真ん中が透明なPNG画像を使ってね</p>
-                    </div>
-
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="frame-grid">
                     </div>
-                </div>
+                    </div>
 
                 <div id="tab-sticker" class="tab-content hidden animate-fade-in">
                     <!-- サブタブ -->
@@ -266,8 +258,8 @@
                                 <span>📁</span> 画像をスタンプにする
                             </label>
                             <input type="file" id="customStickerInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-pink-100 file:text-pink-600 hover:file:bg-pink-200 cursor-pointer"/>
-                        </div>
                     </div>
+                </div>
 
                     <!-- 吹き出しサブタブ -->
                     <div id="sticker-subtab-fukidashi" class="sticker-subtab-content hidden">
@@ -516,14 +508,12 @@
         const canvas = document.getElementById('photoCanvas');
         const ctx = canvas.getContext('2d');
         const photoInput = document.getElementById('photoInput');
-        const customFrameInput = document.getElementById('customFrameInput');
         const customStickerInput = document.getElementById('customStickerInput');
         const placeholder = document.getElementById('placeholder');
         const adjustmentPanel = document.getElementById('adjustment-panel');
         
         let originalImage = null; // 加工用画像
         let frameType = 'none';
-        let customFrameImg = null; // カスタムフレーム画像データ
         let frameImages = {}; // フレーム画像を保存するオブジェクト
         
         let objects = [];
@@ -769,21 +759,6 @@
         });
 
         // カスタムフレームの読み込み
-        customFrameInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    customFrameImg = img;
-                    setFrame('custom'); // フレームタイプをカスタムに設定
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
-
         // カスタムスタンプの読み込み
         customStickerInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -1075,9 +1050,6 @@
             
             if (frameType === 'none') {
                 // フレームなし
-            } else if (frameType === 'custom' && customFrameImg) {
-                // カスタムフレームを描画（全体に引き伸ばす）
-                ctx.drawImage(customFrameImg, 0, 0, w, h);
             } else if (frameImages[frameType]) {
                 // フレーム画像を描画（全体に引き伸ばす）
                 ctx.drawImage(frameImages[frameType], 0, 0, w, h);
