@@ -151,8 +151,8 @@
                 ✂️ 位置とサイズを調整 (16:9)
             </h2>
             
-            <div class="flex-1 min-h-0 flex items-center justify-center bg-gray-50 rounded-2xl overflow-hidden relative mb-6 border-2 border-dashed border-gray-300">
-                <canvas id="trimming-canvas" class="cursor-move"></canvas>
+            <div class="flex-1 min-h-0 flex items-center justify-center bg-gray-50 rounded-2xl overflow-hidden relative mb-6 border-2 border-dashed border-gray-300" style="aspect-ratio: 16 / 9;">
+                <canvas id="trimming-canvas" class="cursor-move w-full h-full object-contain"></canvas>
             </div>
 
             <div class="space-y-6 bg-yellow-50 p-4 rounded-2xl">
@@ -443,6 +443,22 @@
                             </div>
                         </div>
                         
+                        <div>
+                            <label class="text-xs text-amber-500 font-bold block mb-2 pl-1">文字の向き</label>
+                            <div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+                                <button onclick="setTextDirection('horizontal')" id="direction-btn-horizontal" class="direction-select-btn active px-4 py-2 rounded-xl border-2 border-amber-400 bg-amber-50 text-amber-700 font-bold text-sm hover:bg-amber-100 transition whitespace-nowrap" data-direction="horizontal">横書き</button>
+                                <button onclick="setTextDirection('vertical')" id="direction-btn-vertical" class="direction-select-btn px-4 py-2 rounded-xl border-2 border-gray-200 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 transition whitespace-nowrap" data-direction="vertical">縦書き</button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-xs text-amber-500 font-bold block mb-2 pl-1">縁取り</label>
+                            <div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+                                <button onclick="setTextStroke(true)" id="stroke-btn-on" class="stroke-select-btn active px-4 py-2 rounded-xl border-2 border-amber-400 bg-amber-50 text-amber-700 font-bold text-sm hover:bg-amber-100 transition whitespace-nowrap" data-stroke="on">あり</button>
+                                <button onclick="setTextStroke(false)" id="stroke-btn-off" class="stroke-select-btn px-4 py-2 rounded-xl border-2 border-gray-200 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 transition whitespace-nowrap" data-stroke="off">なし</button>
+                            </div>
+                        </div>
+                        
                             <div class="flex-1">
                             <label class="text-xs text-amber-500 font-bold block mb-2 pl-1">カラーをえらぶ</label>
                             <div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
@@ -521,6 +537,8 @@
         canvas.height = BASE_HEIGHT;
         let currentColor = '#f472b6';
         let currentFont = 'rounded'; // 'rounded', 'gothic', 'mincho'
+        let currentDirection = 'horizontal'; // 'horizontal', 'vertical'
+        let currentStroke = true; // true: 縁取りあり, false: 縁取りなし
         let confettiParticles = []; 
         let selectedFukidashiPath = null; // 選択された吹き出しのパス
         
@@ -785,17 +803,23 @@
         function startTrimming(img) {
             trimSourceImage = img;
             trimmingModal.classList.remove('hidden');
-            trimCanvas.width = TRIM_CANVAS_W;
-            trimCanvas.height = TRIM_CANVAS_H;
+            
+            // コンテナのサイズに合わせてキャンバスサイズを調整（16:9を維持）
+            const container = trimCanvas.parentElement;
+            const containerWidth = container.clientWidth;
+            const containerHeight = containerWidth * (9 / 16); // 16:9の高さ
+            
+            trimCanvas.width = containerWidth;
+            trimCanvas.height = containerHeight;
             
             // 完全に全体が入るように初期表示 (Fit)
-            const scaleW = TRIM_CANVAS_W / img.width;
-            const scaleH = TRIM_CANVAS_H / img.height;
+            const scaleW = containerWidth / img.width;
+            const scaleH = containerHeight / img.height;
             const scale = Math.min(scaleW, scaleH) * 0.8; // 少し余白を持たせる
             
             trimState.scale = scale;
-            trimState.x = (TRIM_CANVAS_W - img.width * scale) / 2;
-            trimState.y = (TRIM_CANVAS_H - img.height * scale) / 2;
+            trimState.x = (containerWidth - img.width * scale) / 2;
+            trimState.y = (containerHeight - img.height * scale) / 2;
             
             trimScaleSlider.value = 1.0; 
             drawTrimming();
@@ -809,7 +833,7 @@
 
             if (!trimSourceImage) return;
 
-            const baseScale = Math.min(TRIM_CANVAS_W / trimSourceImage.width, TRIM_CANVAS_H / trimSourceImage.height) * 0.8;
+            const baseScale = Math.min(trimCanvas.width / trimSourceImage.width, trimCanvas.height / trimSourceImage.height) * 0.8;
 
             trimCtx.drawImage(
                 trimSourceImage, 
@@ -823,7 +847,7 @@
             trimCtx.strokeStyle = '#f59e0b'; // amber-500
             trimCtx.lineWidth = 4;
             trimCtx.setLineDash([10, 5]);
-            trimCtx.strokeRect(0, 0, TRIM_CANVAS_W, TRIM_CANVAS_H);
+            trimCtx.strokeRect(0, 0, trimCanvas.width, trimCanvas.height);
             trimCtx.setLineDash([]);
         }
 
@@ -832,11 +856,11 @@
             const oldScale = trimState.scale;
             
             // 基準スケール（初期表示サイズ）
-            const baseScale = Math.min(TRIM_CANVAS_W / trimSourceImage.width, TRIM_CANVAS_H / trimSourceImage.height) * 0.8;
+            const baseScale = Math.min(trimCanvas.width / trimSourceImage.width, trimCanvas.height / trimSourceImage.height) * 0.8;
             const newScale = baseScale * sliderVal;
             
-            const centerX = TRIM_CANVAS_W / 2;
-            const centerY = TRIM_CANVAS_H / 2;
+            const centerX = trimCanvas.width / 2;
+            const centerY = trimCanvas.height / 2;
             
             trimState.x = centerX - (centerX - trimState.x) * (newScale / oldScale);
             trimState.y = centerY - (centerY - trimState.y) * (newScale / oldScale);
@@ -890,10 +914,14 @@
             fCtx.fillStyle = '#ffffff';
             fCtx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
 
-            const drawX = trimState.x;
-            const drawY = trimState.y;
-            const drawWidth = trimSourceImage.width * trimState.scale;
-            const drawHeight = trimSourceImage.height * trimState.scale;
+            // trimCanvasのサイズからBASE_WIDTH/BASE_HEIGHTにスケール
+            const scaleX = BASE_WIDTH / trimCanvas.width;
+            const scaleY = BASE_HEIGHT / trimCanvas.height;
+            
+            const drawX = trimState.x * scaleX;
+            const drawY = trimState.y * scaleY;
+            const drawWidth = trimSourceImage.width * trimState.scale * scaleX;
+            const drawHeight = trimSourceImage.height * trimState.scale * scaleY;
             
             fCtx.drawImage(
                 trimSourceImage,
@@ -953,17 +981,43 @@
                 } else if (obj.type === 'text') {
                     // フォントを選択されたものに変更
                     const fontFamily = getFontFamily(obj.font || 'rounded');
+                    const direction = obj.direction || 'horizontal';
+                    const hasStroke = obj.stroke !== false; // デフォルトはtrue
+                    
                     ctx.font = `bold ${obj.fontSize}px ${fontFamily}`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.lineJoin = 'round';
                     
+                    // 縦書きの場合は回転
+                    if (direction === 'vertical') {
+                        ctx.save();
+                        ctx.rotate(-Math.PI / 2);
+                        // 縦書きの場合は1文字ずつ描画
+                        const chars = obj.content.split('');
+                        const charHeight = obj.fontSize * 1.2;
+                        const startY = -(chars.length - 1) * charHeight / 2;
+                        chars.forEach((char, index) => {
+                            const y = startY + index * charHeight;
+                            if (hasStroke) {
                     ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 10; // 縁取りを太く
+                                ctx.lineWidth = 10;
+                                ctx.strokeText(char, 0, y);
+                            }
+                            ctx.fillStyle = obj.color;
+                            ctx.fillText(char, 0, y);
+                        });
+                        ctx.restore();
+                    } else {
+                        // 横書き
+                        if (hasStroke) {
+                            ctx.strokeStyle = 'white';
+                            ctx.lineWidth = 10; // 縁取りを太く
                     ctx.strokeText(obj.content, 0, 0);
-                    
+                        }
                     ctx.fillStyle = obj.color;
                     ctx.fillText(obj.content, 0, 0);
+                    }
                 }
 
                 if (obj === selectedObject) {
@@ -1095,7 +1149,9 @@
                 rotation: 0,
                 fontSize: 80,
                 color: currentColor,
-                font: currentFont
+                font: currentFont,
+                direction: currentDirection,
+                stroke: currentStroke
             };
             objects.push(obj);
             setSelectedObject(obj);
@@ -1132,6 +1188,44 @@
                     return '"Noto Serif JP", serif';
                 default:
                     return '"M PLUS Rounded 1c", sans-serif';
+            }
+        }
+        
+        function setTextDirection(direction) {
+            currentDirection = direction;
+            // ボタンのスタイルを更新
+            document.querySelectorAll('.direction-select-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-amber-400', 'bg-amber-50', 'text-amber-700');
+                btn.classList.add('border-gray-200', 'bg-white', 'text-gray-600');
+            });
+            const activeBtn = document.getElementById(`direction-btn-${direction}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'border-amber-400', 'bg-amber-50', 'text-amber-700');
+                activeBtn.classList.remove('border-gray-200', 'bg-white', 'text-gray-600');
+            }
+            // 選択中のテキストオブジェクトの方向も更新
+            if (selectedObject && selectedObject.type === 'text') {
+                selectedObject.direction = direction;
+                draw();
+            }
+        }
+        
+        function setTextStroke(hasStroke) {
+            currentStroke = hasStroke;
+            // ボタンのスタイルを更新
+            document.querySelectorAll('.stroke-select-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-amber-400', 'bg-amber-50', 'text-amber-700');
+                btn.classList.add('border-gray-200', 'bg-white', 'text-gray-600');
+            });
+            const activeBtn = document.getElementById(`stroke-btn-${hasStroke ? 'on' : 'off'}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'border-amber-400', 'bg-amber-50', 'text-amber-700');
+                activeBtn.classList.remove('border-gray-200', 'bg-white', 'text-gray-600');
+            }
+            // 選択中のテキストオブジェクトの縁取りも更新
+            if (selectedObject && selectedObject.type === 'text') {
+                selectedObject.stroke = hasStroke;
+                draw();
             }
         }
 
