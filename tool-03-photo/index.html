@@ -245,7 +245,7 @@
                     </div>
 
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="frame-grid">
-                        </div>
+                    </div>
                 </div>
 
                 <div id="tab-sticker" class="tab-content hidden animate-fade-in">
@@ -304,7 +304,7 @@
                     <!-- 絵文字サブタブ -->
                     <div id="sticker-subtab-emoji" class="sticker-subtab-content hidden">
                         <h4 class="text-sm font-bold text-gray-400 mb-3 ml-1">絵文字スタンプ</h4>
-                        <div class="flex flex-wrap gap-3">
+                    <div class="flex flex-wrap gap-3">
                             <button onclick="addSticker('💖')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">💖</button>
                             <button onclick="addSticker('✨')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">✨</button>
                             <button onclick="addSticker('⭐')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">⭐</button>
@@ -412,14 +412,15 @@
                             <button onclick="addSticker('🕒')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">🕒</button>
                             <button onclick="addSticker('🕘')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">🕘</button>
                             <button onclick="addSticker('🕛')" class="w-14 h-14 bg-gray-50 rounded-2xl shadow-sm text-3xl hover:bg-white hover:shadow-md hover:scale-110 transition border border-gray-100">🕛</button>
-                        </div>
-                        <p class="text-xs text-gray-400 mt-4 text-center">※Appleの絵文字を画像として商用利用することはできません。社内利用のみにとどめてください。</p>
                     </div>
+                        <p class="text-xs text-gray-400 mt-4 text-center">※Appleの絵文字を画像として商用利用することはできません。社内利用のみにとどめてください。</p>
+                </div>
 
-                    <!-- スタンプサブタブ（将来の拡張用） -->
+                    <!-- スタンプサブタブ -->
                     <div id="sticker-subtab-stamp" class="sticker-subtab-content hidden">
-                        <div class="text-center py-8 text-gray-400">
-                            <p class="text-sm">スタンプ機能は準備中です</p>
+                        <h4 class="text-sm font-bold text-gray-400 mb-3 ml-1">スタンプを選んでね</h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" id="stamp-grid">
+                            <!-- スタンプ画像はJavaScriptで動的に追加 -->
                         </div>
                     </div>
                 </div>
@@ -431,7 +432,7 @@
                             <input type="text" id="text-input" placeholder="ここに入力してね" class="w-full p-4 border-2 border-amber-100 rounded-2xl focus:outline-none focus:border-amber-400 focus:bg-amber-50 transition text-lg font-bold text-gray-700">
                         </div>
                         
-                        <div class="flex-1">
+                            <div class="flex-1">
                             <label class="text-xs text-amber-500 font-bold block mb-2 pl-1">カラーをえらぶ</label>
                             <div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
                                 <button onclick="setTextColor('#000000')" class="w-10 h-10 rounded-full bg-black border-2 border-gray-200 flex-shrink-0 shadow-sm hover:scale-110 transition"></button>
@@ -448,9 +449,9 @@
                                         <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
                                         </svg>
-                                    </div>
                                 </div>
                             </div>
+                        </div>
                         </div>
                         <button onclick="addText()" class="w-full bg-gradient-to-r from-amber-400 to-orange-400 text-white font-extrabold py-4 px-6 rounded-2xl shadow-md hover:shadow-lg btn-hover-pop transition text-lg tracking-wider">
                             追加する ✏️
@@ -502,7 +503,7 @@
         canvas.width = BASE_WIDTH;
         canvas.height = BASE_HEIGHT;
         let currentColor = '#f472b6';
-        let confettiParticles = [];
+        let confettiParticles = []; 
         let selectedFukidashiPath = null; // 選択された吹き出しのパス
         
         // 吹き出しのリスト
@@ -563,6 +564,38 @@
             noneButton.onclick = () => setFrame('none');
             noneButton.innerHTML = '<span class="text-2xl block mb-1">🚫</span>なし';
             frameGrid.insertBefore(noneButton, frameGrid.firstChild);
+        }
+        
+        // スタンプ画像のリスト
+        const stampList = [
+            { name: 'Nice', path: 'images/stamp/moji_nice01.png' },
+            { name: 'Cool', path: 'images/stamp/moji_cool.png' },
+            { name: 'Guinness', path: 'images/stamp/moji_guinness.png' },
+            { name: 'Max', path: 'images/stamp/moji_max.png' },
+            { name: 'Sasuga', path: 'images/stamp/moji_sasuga.png' }
+        ];
+        
+        // スタンプ画像を読み込む
+        function loadStampImages() {
+            const stampGrid = document.getElementById('stamp-grid');
+            stampList.forEach((stamp) => {
+                const button = document.createElement('button');
+                button.className = 'p-2 border-2 border-gray-100 rounded-2xl hover:border-amber-400 hover:shadow-md bg-white overflow-hidden relative group transition-all';
+                button.onclick = () => {
+                    const img = new Image();
+                    img.onload = () => addImageSticker(img);
+                    img.src = stamp.path;
+                };
+                
+                // スタンプ画像を読み込んでサムネイルとして表示
+                const img = document.createElement('img');
+                img.src = stamp.path;
+                img.className = 'w-full h-24 object-contain group-hover:scale-105 transition';
+                img.alt = `スタンプ ${stamp.name}`;
+                
+                button.appendChild(img);
+                stampGrid.appendChild(button);
+            });
         }
         
         // 吹き出しの形を読み込む
@@ -667,9 +700,10 @@
                 });
         }
         
-        // ページ読み込み時にフレーム画像と吹き出しを読み込む
+        // ページ読み込み時にフレーム画像、吹き出し、スタンプを読み込む
         loadFrameImages();
-        loadFukidashiShapes(); 
+        loadFukidashiShapes();
+        loadStampImages(); 
 
         /* =========================================
            トリミング関連
@@ -757,7 +791,7 @@
             if (!trimSourceImage) return;
 
             const baseScale = Math.min(TRIM_CANVAS_W / trimSourceImage.width, TRIM_CANVAS_H / trimSourceImage.height) * 0.8;
-            
+
             trimCtx.drawImage(
                 trimSourceImage, 
                 trimState.x, 
