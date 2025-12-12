@@ -742,14 +742,11 @@
 
         function getSvgShape(type, s, fillAttr, strokeAttr) {
             const half = s/2;
-            if (faIconPaths[type]) {
-                // Use SVG path instead of text to avoid font dependency
-                // Font Awesome icons use viewBox="0 0 512 512", so we scale from center
-                const scale = s / 512;
-                const viewBox = "0 0 512 512";
-                return `<g transform="scale(${scale}) translate(-256, -256)">
-                    <path d="${faIconPaths[type]}" ${fillAttr} />
-                </g>`;
+            if (faIcons[type]) {
+                // Text for icons (Note: requires font installed locally or embedded to work perfectly in external tools)
+                // We convert unicode char to hex entity
+                const code = faIcons[type].charCodeAt(0).toString(16);
+                return `<text x="0" y="0" dominant-baseline="central" text-anchor="middle" font-family="Font Awesome 6 Free" font-weight="900" font-size="${s}" ${fillAttr}>&#x${code};</text>`;
             }
             
             switch (type) {
