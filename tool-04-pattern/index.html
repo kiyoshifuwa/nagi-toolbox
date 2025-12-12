@@ -4,23 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pattern Maker | デザイナー向けパターン生成ツール</title>
-    <!-- Tailwind CSS for styling -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for Icons (Web Font) -->
+    <!-- Font Awesome (Web Font) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background-color: #fdf2f8; /* pink-50 */
+            /* モバイルでのスクロール挙動を改善 */
             height: 100vh;
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         
+        /* カスタムスクロールバー */
         .custom-scroll::-webkit-scrollbar {
             width: 6px;
+            height: 6px;
         }
         .custom-scroll::-webkit-scrollbar-track {
             background: transparent;
@@ -61,41 +65,41 @@
             border-radius: 2px;
         }
 
-        /* アイコンボタンのスタイル調整 */
         .shape-btn i {
-            font-size: 1.25rem; /* 20px */
+            font-size: 1.25rem;
             pointer-events: none;
         }
     </style>
 </head>
-<body class="flex flex-col md:flex-row h-screen text-gray-800">
+<!-- flex-col-reverseでモバイル時はプレビュー(main)を上に、設定(aside)を下にする -->
+<!-- md:flex-rowでPC時は設定(左)、プレビュー(右)にする -->
+<body class="flex flex-col-reverse md:flex-row h-screen text-gray-800 overflow-hidden">
 
-    <!-- 左サイドバー: 設定パネル -->
-    <aside class="w-full md:w-80 bg-white shadow-xl z-10 flex flex-col h-full border-r border-gray-200">
-        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-pink-600 flex items-center gap-2">
+    <!-- 設定パネル (PC: 左側, Mobile: 下側) -->
+    <aside class="w-full md:w-80 bg-white shadow-xl z-10 flex flex-col border-r border-gray-200 h-1/2 md:h-full">
+        <div class="p-4 md:p-5 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-20">
+            <h1 class="text-lg md:text-xl font-bold text-pink-600 flex items-center gap-2">
                 <i class="fa-solid fa-shapes"></i> Pattern Maker
             </h1>
-            <button id="randomBtn" class="text-xs bg-pink-50 text-pink-600 px-2 py-1 rounded hover:bg-pink-100 transition" title="ランダム生成">
+            <button id="randomBtn" class="text-xs bg-pink-50 text-pink-600 px-3 py-1 rounded hover:bg-pink-100 transition" title="ランダム生成">
                 <i class="fa-solid fa-dice"></i> Random
             </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto custom-scroll p-5 space-y-6">
+        <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-5 space-y-6">
             
             <!-- Shape Selection -->
             <div class="space-y-2">
                 <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">図形 (Shape)</label>
                 <div class="grid grid-cols-4 gap-2">
                     
-                    <!-- Line Patterns (New) -->
+                    <!-- Line Patterns -->
                     <button class="shape-btn p-2 rounded border border-gray-200 hover:border-pink-500 hover:bg-pink-50 transition flex justify-center items-center h-10" data-shape="stripe" title="ストライプ">
                         <i class="fa-solid fa-grip-lines-vertical text-gray-600 text-sm"></i>
                     </button>
                     <button class="shape-btn p-2 rounded border border-gray-200 hover:border-pink-500 hover:bg-pink-50 transition flex justify-center items-center h-10" data-shape="grid" title="方眼 (グリッド)">
                         <i class="fa-solid fa-border-all text-gray-600 text-sm"></i>
                     </button>
-                    <!-- Spacer for alignment if needed, or just Basic Geometry starts here -->
                     
                     <!-- Basic Geometry -->
                     <button class="shape-btn p-2 rounded border border-gray-200 hover:border-pink-500 hover:bg-pink-50 transition flex justify-center items-center h-10" data-shape="circle" title="円">
@@ -233,27 +237,35 @@
                 </label>
             </div>
 
+            <!-- Spacing for mobile scroll -->
+            <div class="h-10 md:hidden"></div>
+
         </div>
 
-        <!-- Download Action -->
-        <div class="p-5 border-t border-gray-200 bg-gray-50">
-            <button id="downloadBtn" class="w-full bg-pink-600 text-white font-semibold py-3 px-4 rounded-lg shadow hover:bg-pink-700 transition flex justify-center items-center gap-2">
-                <i class="fa-solid fa-download"></i> ダウンロード (PNG)
-            </button>
-            <p class="text-xs text-center text-gray-400 mt-2">2000 x 2000px で出力されます</p>
+        <!-- Action Buttons -->
+        <div class="p-4 md:p-5 border-t border-gray-200 bg-gray-50">
+            <div class="flex gap-2">
+                <button id="downloadBtn" class="flex-1 bg-pink-600 text-white font-semibold py-3 px-2 rounded-lg shadow hover:bg-pink-700 transition flex justify-center items-center gap-2 text-sm md:text-base">
+                    <i class="fa-solid fa-download"></i> PNG
+                </button>
+                <button id="downloadSvgBtn" class="flex-1 bg-white border border-pink-300 text-pink-600 font-semibold py-3 px-2 rounded-lg shadow hover:bg-pink-50 transition flex justify-center items-center gap-2 text-sm md:text-base">
+                    <i class="fa-solid fa-file-code"></i> SVG
+                </button>
+            </div>
+            <p class="text-xs text-center text-gray-400 mt-2">2000 x 2000px</p>
         </div>
     </aside>
 
-    <!-- 右側: プレビューエリア -->
-    <main class="flex-1 relative flex flex-col min-w-0">
+    <!-- プレビューエリア (PC: 右側, Mobile: 上側) -->
+    <main class="flex-1 relative flex flex-col min-w-0 h-1/2 md:h-full bg-gray-100 overflow-hidden">
         <!-- キャンバスエリア -->
-        <div class="flex-1 relative overflow-hidden flex items-center justify-center p-4 md:p-10 checkered-bg bg-gray-100">
-            <div class="relative shadow-2xl bg-white">
+        <div class="flex-1 relative flex items-center justify-center p-4 md:p-10 checkered-bg h-full">
+            <div class="relative shadow-2xl bg-white max-w-full max-h-full aspect-square">
                 <!-- 実際に描画されるキャンバス -->
-                <canvas id="mainCanvas" width="2000" height="2000" class="max-w-full max-h-[80vh] w-auto h-auto object-contain"></canvas>
+                <canvas id="mainCanvas" width="2000" height="2000" class="w-full h-full object-contain block"></canvas>
                 
                 <!-- サイズ表示ラベル -->
-                <div class="absolute -top-6 left-0 text-xs text-gray-500 font-mono">Preview (2000x2000px)</div>
+                <div class="absolute -top-6 left-0 text-xs text-gray-500 font-mono">Preview</div>
                 <!-- シームレス表示バッジ -->
                 <div id="seamlessBadge" class="absolute top-2 right-2 bg-pink-600 text-white text-[10px] px-2 py-1 rounded shadow hidden">Seamless ON</div>
             </div>
@@ -261,13 +273,13 @@
     </main>
 
     <script>
-        // DOM要素の取得
+        // DOM要素
         const canvas = document.getElementById('mainCanvas');
         const ctx = canvas.getContext('2d');
         
         // 状態管理
         const state = {
-            shape: 'stripe', // デフォルトを変えてみても良い
+            shape: 'stripe', 
             color: '#333333',
             opacity: 1,
             bgColor: '#ffffff',
@@ -282,7 +294,6 @@
             canvasSize: 2000
         };
 
-        // 入力要素のマッピング
         const inputs = {
             shapeBtns: document.querySelectorAll('.shape-btn'),
             color: document.getElementById('shapeColor'),
@@ -297,10 +308,10 @@
             randomizePos: document.getElementById('randomizePos'),
             seamlessMode: document.getElementById('seamlessMode'),
             downloadBtn: document.getElementById('downloadBtn'),
+            downloadSvgBtn: document.getElementById('downloadSvgBtn'),
             randomBtn: document.getElementById('randomBtn')
         };
 
-        // 値表示用要素
         const labels = {
             size: document.getElementById('sizeVal'),
             gap: document.getElementById('gapVal'),
@@ -311,7 +322,7 @@
         const jitterWarning = document.getElementById('jitterWarning');
         const seamlessBadge = document.getElementById('seamlessBadge');
 
-        // Font Awesome Icons Unicode Map
+        // Font Awesome Icons Map (Unicode)
         const faIcons = {
             'star': '\uf005',
             'heart': '\uf004',
@@ -327,19 +338,13 @@
             'paw': '\uf1b0'
         };
 
-        // 初期化
         function init() {
             addEventListeners();
             updateUI();
-            
-            // Webフォント読み込み待ち（簡易対応）
-            document.fonts.ready.then(() => {
-                draw();
-            });
+            document.fonts.ready.then(() => { draw(); });
             draw();
         }
 
-        // イベントリスナーの設定
         function addEventListeners() {
             inputs.shapeBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -347,16 +352,15 @@
                         b.classList.remove('border-pink-500', 'bg-pink-50', 'ring-2', 'ring-pink-200');
                         b.classList.add('border-gray-200');
                     });
-                    
                     const target = e.currentTarget;
                     target.classList.remove('border-gray-200');
                     target.classList.add('border-pink-500', 'bg-pink-50', 'ring-2', 'ring-pink-200');
-                    
                     state.shape = target.dataset.shape;
                     draw();
                 });
             });
 
+            // UI同期
             const activeBtn = document.querySelector(`[data-shape="${state.shape}"]`);
             if(activeBtn) {
                 activeBtn.classList.remove('border-gray-200');
@@ -390,6 +394,7 @@
             inputs.seamlessMode.addEventListener('change', e => updateStateAndDraw('seamlessMode', e.target.checked));
 
             inputs.downloadBtn.addEventListener('click', downloadImage);
+            inputs.downloadSvgBtn.addEventListener('click', downloadSvg);
             inputs.randomBtn.addEventListener('click', generateRandom);
         }
 
@@ -399,20 +404,12 @@
             labels.rotation.textContent = `${state.rotation}°`;
             labels.stroke.textContent = `${state.strokeWidth}px`;
             
-            // UI制御
-            if(state.seamlessMode && state.randomizePos) {
-                jitterWarning.classList.remove('hidden');
-            } else {
-                jitterWarning.classList.add('hidden');
-            }
+            if(state.seamlessMode && state.randomizePos) jitterWarning.classList.remove('hidden');
+            else jitterWarning.classList.add('hidden');
 
-            if(state.seamlessMode) {
-                seamlessBadge.classList.remove('hidden');
-            } else {
-                seamlessBadge.classList.add('hidden');
-            }
+            if(state.seamlessMode) seamlessBadge.classList.remove('hidden');
+            else seamlessBadge.classList.add('hidden');
 
-            // ストライプ・グリッドのときは千鳥配置オプションを無効化（意味がないため）
             if (state.shape === 'stripe' || state.shape === 'grid') {
                 inputs.offsetRow.parentElement.classList.add('opacity-50', 'pointer-events-none');
                 inputs.randomizePos.parentElement.classList.add('opacity-50', 'pointer-events-none');
@@ -435,7 +432,6 @@
             const pathShapes = ['circle', 'square', 'triangle', 'cross', 'diamond', 'line', 'wave', 'dot', 'stripe', 'grid'];
             const iconShapes = Object.keys(faIcons);
             const allShapes = [...pathShapes, ...iconShapes];
-            
             const randomShape = allShapes[Math.floor(Math.random() * allShapes.length)];
             
             const btn = document.querySelector(`[data-shape="${randomShape}"]`);
@@ -473,42 +469,46 @@
             draw();
         }
 
-        // メイン描画関数
-        function draw() {
-            // ストライプまたはグリッドの場合は専用の描画ロジックへ分岐
-            if (state.shape === 'stripe' || state.shape === 'grid') {
-                drawLinearPattern();
-                return;
-            }
+        // --- Drawing Logic ---
 
-            // 通常の図形描画
-            drawGeometricPattern();
+        function getCalculatedParams() {
+             const size = state.size;
+             let gap = state.gap;
+             let count = 0;
+
+             if (state.seamlessMode) {
+                let rawPitch = size + gap;
+                count = Math.round(canvas.width / rawPitch);
+                if (count < 2) count = 2;
+                
+                // ストライプ/グリッド以外でOffsetRowが有効な場合、偶数行にする
+                if (state.shape !== 'stripe' && state.shape !== 'grid') {
+                    if (state.offsetRow && count % 2 !== 0) count += 1; 
+                }
+                
+                let adjustedPitch = canvas.width / count;
+                gap = adjustedPitch - size;
+             }
+             return { size, gap, step: size + gap };
         }
 
-        // 線形パターン（ストライプ・グリッド）描画ロジック
+        function draw() {
+            if (state.shape === 'stripe' || state.shape === 'grid') {
+                drawLinearPattern();
+            } else {
+                drawGeometricPattern();
+            }
+        }
+
         function drawLinearPattern() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             if (!state.transparentBg) {
                 ctx.fillStyle = state.bgColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            const size = state.size; // ストライプではピッチの一部として利用
-            let gap = state.gap;
+            const { size, gap, step } = getCalculatedParams();
             
-            // シームレスモード計算
-            if (state.seamlessMode) {
-                let rawPitch = size + gap;
-                let count = Math.round(canvas.width / rawPitch);
-                if (count < 2) count = 2;
-                let adjustedPitch = canvas.width / count;
-                gap = adjustedPitch - size; // gapを逆算
-            }
-
-            const step = size + gap;
-
-            // スタイル設定
             const hex = state.color.replace('#', '');
             const r = parseInt(hex.substring(0, 2), 16);
             const g = parseInt(hex.substring(2, 4), 16);
@@ -516,53 +516,27 @@
             const colorString = `rgba(${r}, ${g}, ${b}, ${state.opacity})`;
 
             ctx.strokeStyle = colorString;
-            ctx.lineWidth = state.strokeWidth; // 線の太さはこれを使う
-            ctx.lineCap = 'butt'; // 端を直角に
+            ctx.lineWidth = state.strokeWidth; 
+            ctx.lineCap = 'butt'; 
 
-            // 回転のためのコンテキスト保存
             ctx.save();
-            
-            // キャンバス中心へ移動して回転
             ctx.translate(canvas.width / 2, canvas.height / 2);
             const rad = state.rotation * Math.PI / 180;
             ctx.rotate(rad);
 
-            // 描画範囲の計算（回転しても画面全体を覆うように対角線長を利用）
             const diagonal = Math.sqrt(canvas.width**2 + canvas.height**2);
-            const limit = diagonal; // 中心から±limitまで描画
-
-            // ループ描画
-            // グリッドやストライプの中心を合わせるためにオフセット計算
-            // シームレスの場合は特に中心がズレないように配慮
+            const limit = diagonal; 
             
-            const start = -limit;
-            const end = limit;
-
             ctx.beginPath();
-
-            // 縦線 (Stripe & Grid)
-            // stepごとに線を描画
-            // 原点(0,0)を通るように描画することで回転の中心が合う
             for (let x = 0; x <= limit; x += step) {
-                // 正方向
-                ctx.moveTo(x, -limit);
-                ctx.lineTo(x, limit);
-                // 負方向（0は重複するので避ける）
-                if (x !== 0) {
-                    ctx.moveTo(-x, -limit);
-                    ctx.lineTo(-x, limit);
-                }
+                ctx.moveTo(x, -limit); ctx.lineTo(x, limit);
+                if (x !== 0) { ctx.moveTo(-x, -limit); ctx.lineTo(-x, limit); }
             }
 
-            // 横線 (Gridのみ)
             if (state.shape === 'grid') {
                 for (let y = 0; y <= limit; y += step) {
-                    ctx.moveTo(-limit, y);
-                    ctx.lineTo(limit, y);
-                    if (y !== 0) {
-                        ctx.moveTo(-limit, -y);
-                        ctx.lineTo(limit, -y);
-                    }
+                    ctx.moveTo(-limit, y); ctx.lineTo(limit, y);
+                    if (y !== 0) { ctx.moveTo(-limit, -y); ctx.lineTo(limit, -y); }
                 }
             }
             
@@ -570,31 +544,14 @@
             ctx.restore();
         }
 
-        // 通常の図形パターン描画ロジック (以前のdraw関数)
         function drawGeometricPattern() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             if (!state.transparentBg) {
                 ctx.fillStyle = state.bgColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            const size = state.size;
-            let gap = state.gap;
-
-            // シームレスモード計算
-            if (state.seamlessMode) {
-                let rawPitch = size + gap;
-                let count = Math.round(canvas.width / rawPitch);
-                if (count < 2) count = 2;
-                if (state.offsetRow && count % 2 !== 0) {
-                     count += 1; 
-                }
-                let adjustedPitch = canvas.width / count;
-                gap = adjustedPitch - size;
-            }
-
-            const step = size + gap;
+            const { size, gap, step } = getCalculatedParams();
             
             const hex = state.color.replace('#', '');
             const r = parseInt(hex.substring(0, 2), 16);
@@ -636,79 +593,166 @@
 
                     ctx.translate(drawX, drawY);
                     ctx.rotate(rad);
-
-                    drawShape(state.shape, 0, 0, size);
-                    
+                    drawShape(ctx, state.shape, 0, 0, size);
                     ctx.restore();
                 }
             }
         }
 
-        function drawShape(type, x, y, s) {
+        function drawShape(context, type, x, y, s) {
             const half = s / 2;
-            
             if (faIcons[type]) {
-                ctx.fillText(faIcons[type], 0, 0);
+                context.fillText(faIcons[type], 0, 0);
                 return;
             }
-
-            ctx.beginPath();
+            context.beginPath();
             switch (type) {
-                case 'circle':
-                    ctx.arc(0, 0, half, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-                case 'square':
-                    ctx.rect(-half, -half, s, s);
-                    ctx.fill();
-                    break;
+                case 'circle': context.arc(0, 0, half, 0, Math.PI * 2); context.fill(); break;
+                case 'square': context.rect(-half, -half, s, s); context.fill(); break;
                 case 'triangle':
                     const h = s * (Math.sqrt(3)/2);
-                    ctx.moveTo(0, -h/1.5);
-                    ctx.lineTo(-half, h/3);
-                    ctx.lineTo(half, h/3);
-                    ctx.closePath();
-                    ctx.fill();
+                    context.moveTo(0, -h/1.5); context.lineTo(-half, h/3); context.lineTo(half, h/3);
+                    context.closePath(); context.fill();
                     break;
                 case 'cross':
-                    ctx.moveTo(-half, -half);
-                    ctx.lineTo(half, half);
-                    ctx.moveTo(half, -half);
-                    ctx.lineTo(-half, half);
-                    ctx.stroke();
+                    context.moveTo(-half, -half); context.lineTo(half, half);
+                    context.moveTo(half, -half); context.lineTo(-half, half);
+                    context.stroke();
                     break;
                 case 'diamond':
-                    ctx.moveTo(0, -half);
-                    ctx.lineTo(half, 0);
-                    ctx.lineTo(0, half);
-                    ctx.lineTo(-half, 0);
-                    ctx.closePath();
-                    ctx.fill();
-                    break;
-                case 'line':
-                    ctx.moveTo(-half, 0);
-                    ctx.lineTo(half, 0);
-                    ctx.stroke();
-                    break;
+                    context.moveTo(0, -half); context.lineTo(half, 0); context.lineTo(0, half); context.lineTo(-half, 0);
+                    context.closePath(); context.fill(); break;
+                case 'line': context.moveTo(-half, 0); context.lineTo(half, 0); context.stroke(); break;
                 case 'wave':
-                    ctx.moveTo(-half, 0);
-                    ctx.quadraticCurveTo(-half/2, -half, 0, 0);
-                    ctx.quadraticCurveTo(half/2, half, half, 0);
-                    ctx.stroke();
-                    break;
-                case 'dot':
-                    ctx.arc(0, 0, half/3, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
+                    context.moveTo(-half, 0);
+                    context.quadraticCurveTo(-half/2, -half, 0, 0);
+                    context.quadraticCurveTo(half/2, half, half, 0);
+                    context.stroke(); break;
+                case 'dot': context.arc(0, 0, half/3, 0, Math.PI * 2); context.fill(); break;
             }
         }
 
         function downloadImage() {
             const link = document.createElement('a');
             const timestamp = new Date().getTime();
-            link.download = `geopattern_${timestamp}.png`;
+            link.download = `pattern_${timestamp}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
+        }
+
+        // --- SVG Export Logic ---
+        
+        function downloadSvg() {
+            const { size, gap, step } = getCalculatedParams();
+            const width = state.canvasSize;
+            const height = state.canvasSize;
+            const hex = state.color;
+            const opacity = state.opacity;
+            const strokeW = state.strokeWidth;
+            
+            // Background
+            let svgContent = `<rect width="100%" height="100%" fill="${state.transparentBg ? 'none' : state.bgColor}" />`;
+            
+            // Common styles
+            const fillAttr = `fill="${hex}" fill-opacity="${opacity}"`;
+            const strokeAttr = `stroke="${hex}" stroke-opacity="${opacity}" stroke-width="${strokeW}" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
+            
+            if (state.shape === 'stripe' || state.shape === 'grid') {
+                // Linear Pattern SVG
+                const diagonal = Math.sqrt(width**2 + height**2);
+                const limit = diagonal;
+                let paths = "";
+                
+                // Group with transform for rotation (centered)
+                const rot = state.rotation;
+                
+                // Lines
+                for (let x = 0; x <= limit; x += step) {
+                     paths += `<line x1="${x}" y1="${-limit}" x2="${x}" y2="${limit}" />`;
+                     if (x!==0) paths += `<line x1="${-x}" y1="${-limit}" x2="${-x}" y2="${limit}" />`;
+                }
+                if (state.shape === 'grid') {
+                    for (let y = 0; y <= limit; y += step) {
+                        paths += `<line x1="${-limit}" y1="${y}" x2="${limit}" y2="${y}" />`;
+                        if (y!==0) paths += `<line x1="${-limit}" y1="${-y}" x2="${limit}" y2="${-y}" />`;
+                    }
+                }
+                
+                svgContent += `<g transform="translate(${width/2}, ${height/2}) rotate(${rot})">
+                                <g ${strokeAttr.replace('stroke-linecap="round"', 'stroke-linecap="butt"')}>${paths}</g>
+                               </g>`;
+            } else {
+                // Geometric Pattern SVG
+                const margin = step;
+                let shapes = "";
+                
+                for (let y = -margin; y < height + margin; y += step) {
+                    let rowIndex = Math.round(y / step);
+                    let xOffset = 0;
+                    if (state.offsetRow) {
+                        if (rowIndex % 2 !== 0) xOffset = step / 2;
+                    }
+
+                    for (let x = -margin; x < width + margin; x += step) {
+                        let drawX = x + xOffset + size / 2;
+                        let drawY = y + size / 2;
+                        
+                        if (state.randomizePos) {
+                            const pseudoRandom = Math.sin(rowIndex * 12.9898 + (x/step) * 78.233) * 43758.5453;
+                            const jitterVal = (pseudoRandom - Math.floor(pseudoRandom)) * (gap / 1.5);
+                            drawX += jitterVal;
+                            drawY += jitterVal;
+                        }
+
+                        // Shapes
+                        const rot = state.rotation;
+                        // Each shape is a group with transform
+                        shapes += `<g transform="translate(${drawX}, ${drawY}) rotate(${rot})">`;
+                        shapes += getSvgShape(state.shape, size, fillAttr, strokeAttr);
+                        shapes += `</g>`;
+                    }
+                }
+                svgContent += shapes;
+            }
+
+            const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${svgContent}</svg>`;
+            
+            const blob = new Blob([svgString], {type: 'image/svg+xml'});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `pattern_${new Date().getTime()}.svg`;
+            link.href = url;
+            link.click();
+        }
+
+        function getSvgShape(type, s, fillAttr, strokeAttr) {
+            const half = s/2;
+            if (faIcons[type]) {
+                // Text for icons (Note: requires font installed locally or embedded to work perfectly in external tools)
+                // We convert unicode char to hex entity
+                const code = faIcons[type].charCodeAt(0).toString(16);
+                return `<text x="0" y="0" dominant-baseline="central" text-anchor="middle" font-family="Font Awesome 6 Free" font-weight="900" font-size="${s}" ${fillAttr}>&#x${code};</text>`;
+            }
+            
+            switch (type) {
+                case 'circle': return `<circle cx="0" cy="0" r="${half}" ${fillAttr} />`;
+                case 'square': return `<rect x="${-half}" y="${-half}" width="${s}" height="${s}" ${fillAttr} />`;
+                case 'triangle':
+                    const h = s * (Math.sqrt(3)/2);
+                    return `<polygon points="0,${-h/1.5} ${-half},${h/3} ${half},${h/3}" ${fillAttr} />`;
+                case 'cross':
+                    return `<g ${strokeAttr}>
+                        <line x1="${-half}" y1="${-half}" x2="${half}" y2="${half}" />
+                        <line x1="${half}" y1="${-half}" x2="${-half}" y2="${half}" />
+                    </g>`;
+                case 'diamond':
+                     return `<polygon points="0,${-half} ${half},0 0,${half} ${-half},0" ${fillAttr} />`;
+                case 'line': return `<line x1="${-half}" y1="0" x2="${half}" y2="0" ${strokeAttr} />`;
+                case 'wave':
+                     return `<path d="M${-half},0 Q${-half/2},${-half} 0,0 T${half},0" fill="none" ${strokeAttr} />`;
+                case 'dot': return `<circle cx="0" cy="0" r="${half/3}" ${fillAttr} />`;
+            }
+            return "";
         }
 
         init();
