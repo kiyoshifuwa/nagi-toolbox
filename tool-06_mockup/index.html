@@ -144,19 +144,19 @@
                             <button onclick="applyPreset('thankscard')" class="btn-select">
                                 <i class="fa-solid fa-heart text-pink-500"></i>
                                 サンクスカード
-                            </button>
+                        </button>
                             <button onclick="applyPreset('company_notice')" class="btn-select">
                                 <i class="fa-solid fa-bullhorn text-blue-500"></i>
                                 会社からのお知らせ
-                            </button>
+                        </button>
                             <button onclick="applyPreset('monthly_award')" class="btn-select">
                                 <i class="fa-solid fa-trophy text-yellow-500"></i>
                                 月間表彰
-                            </button>
+                        </button>
                             <button onclick="applyPreset('president_message')" class="btn-select">
                                 <i class="fa-solid fa-user-tie text-indigo-500"></i>
                                 社長メッセージ
-                            </button>
+                        </button>
                         </div>
                     </div>
                     
@@ -171,7 +171,7 @@
                             <button onclick="applyPreset('post_president_message')" class="btn-select">
                                 <i class="fa-solid fa-user-tie text-purple-500"></i>
                                 社長メッセージ
-                            </button>
+                        </button>
                         </div>
                     </div>
                     <div class="mt-2 bg-blue-50 border border-blue-100 rounded p-3 text-xs text-blue-800">
@@ -384,7 +384,7 @@
             const checkAllLoaded = () => {
                 loadedCount++;
                 if (loadedCount === totalImages) {
-                    setDevice('pc');
+            setDevice('pc');
                     // デフォルトでpresetタブを表示
                     switchTab('preset');
                 }
@@ -464,7 +464,7 @@
                     targetHeight = targetWidth * aspectRatio;
                 } else {
                     // デフォルトサイズを使用
-                    const dims = config[type];
+            const dims = config[type];
                     const aspectRatio = dims.height / dims.width;
                     targetHeight = targetWidth * aspectRatio;
                 }
@@ -1103,17 +1103,8 @@
                     }
                     
             document.fonts.ready.then(() => {
-                        // 内部要素のサイズも固定
-                        const screenArea = target.querySelector('#screen-area');
-                        const originalScreenWidth = screenArea ? screenArea.style.width : '';
-                        const originalScreenHeight = screenArea ? screenArea.style.height : '';
-                        
-                        if (screenArea) {
-                            screenArea.style.width = `${finalWidth}px`;
-                            screenArea.style.height = `${finalHeight}px`;
-                        }
-                        
                         // html2canvasにサイズを明示的に指定
+                        // widthとheightを明示的に指定してアスペクト比を維持
                         html2canvas(target, { 
                             backgroundColor: null, // 透明背景
                             scale: 2, 
@@ -1123,6 +1114,8 @@
                             removeContainer: false,
                             imageTimeout: 15000,
                             foreignObjectRendering: false, // foreignObjectを無効化
+                            width: finalWidth,
+                            height: finalHeight,
                             windowWidth: finalWidth,
                             windowHeight: finalHeight
                         }).then(canvas => {
@@ -1165,11 +1158,11 @@
                             
                             // ダウンロード（tainted canvasでもtoDataURLは動作する）
                             try {
-                                const link = document.createElement('a');
-                                link.download = `tunag-mockup-${Date.now()}.png`;
+                    const link = document.createElement('a');
+                    link.download = `tunag-mockup-${Date.now()}.png`;
                                 link.href = finalCanvas.toDataURL('image/png', 1.0);
                                 document.body.appendChild(link);
-                                link.click();
+                    link.click();
                                 document.body.removeChild(link);
                             } catch (e) {
                                 // toDataURLが失敗した場合、blob URLを使用
