@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS Metrics Simulator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue.js 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* スライダーのカスタマイズ */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #4f46e5; /* indigo-600 */
+            cursor: pointer;
+            margin-top: -8px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.5s ease;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+<div id="app" class="min-h-screen flex flex-col">
+    <!-- ヘッダー -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                <h1 class="text-xl font-bold text-slate-900 tracking-tight">SaaS Growth Simulator</h1>
+            </div>
+            <div class="text-sm text-slate-500 hidden sm:block">
+                現状 vs 目標値で未来を比較
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- 左カラム：入力コントロール -->
+            <div class="lg:col-span-4 space-y-6">
+                
+                <!-- 基本設定カード (Baseline) -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg>
+                        現状のメトリクス (Baseline)
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-4">ここに入力した値が「現状維持シナリオ（点線）」の基準になります。</p>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- MRR Input -->
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">現在のMRR</label>
+                                <div class="relative rounded-md shadow-sm">
+                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span class="text-slate-500 sm:text-sm">¥</span>
+                                    </div>
+                                    <input type="number" v-model.number="inputs.currentMrr" class="block w-full rounded-md border-slate-300 py-2 pl-7 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 border" placeholder="0">
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <span class="text-slate-500 sm:text-sm">万円</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Customers Input -->
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">現在の顧客数</label>
+                                <input type="number" v-model.number="inputs.currentCustomers" class="block w-full rounded-md border-slate-300 py-2 px-3 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 border">
+                            </div>
+
+                            <!-- Current Churn Rate -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">現在の解約率</label>
+                                <div class="relative rounded-md shadow-sm">
+                                    <input type="number" step="0.1" v-model.number="inputs.currentChurnRate" class="block w-full rounded-md border-slate-300 py-2 px-3 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 border">
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <span class="text-slate-500 sm:text-sm">%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Current New Customers -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">現在の新規獲得</label>
+                                <div class="relative rounded-md shadow-sm">
+                                    <input type="number" v-model.number="inputs.currentNewCustomers" class="block w-full rounded-md border-slate-300 py-2 px-3 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 border">
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <span class="text-slate-500 sm:text-xs">社/月</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-indigo-50 rounded-lg p-3 text-sm text-indigo-800 flex justify-between items-center mt-2">
+                            <span class="font-medium">現在のARPU (単価):</span>
+                            <span class="font-bold">¥{{ formatNumber(computedArpu) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- シミュレーション設定カード (Target) -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 border-l-4 border-l-indigo-500 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-indigo-100 rounded-full blur-2xl opacity-50 pointer-events-none"></div>
+                    
+                    <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        目標パラメーター (Target)
+                    </h2>
+                    
+                    <div class="space-y-6 relative z-10">
+                        <!-- Target Churn Rate Slider -->
+                        <div>
+                            <div class="flex justify-between mb-1 items-end">
+                                <label class="text-sm font-medium text-slate-700">目標 月次解約率</label>
+                                <div class="text-right">
+                                    <span class="text-lg font-bold text-indigo-600">{{ inputs.targetChurnRate }}%</span>
+                                    <span v-if="inputs.targetChurnRate < inputs.currentChurnRate" class="text-xs text-green-600 font-medium ml-1">
+                                        (改善 {{ (inputs.currentChurnRate - inputs.targetChurnRate).toFixed(1) }}%)
+                                    </span>
+                                </div>
+                            </div>
+                            <input type="range" min="0.1" max="10" step="0.1" v-model.number="inputs.targetChurnRate" 
+                                class="w-full bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                            <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>0.1%</span>
+                                <span>10%</span>
+                            </div>
+                        </div>
+
+                        <!-- Target New Customers Slider -->
+                        <div>
+                            <div class="flex justify-between mb-1 items-end">
+                                <label class="text-sm font-medium text-slate-700">目標 月間新規獲得</label>
+                                <div class="text-right">
+                                    <span class="text-lg font-bold text-indigo-600">{{ inputs.targetNewCustomers }} <span class="text-sm font-normal">社/月</span></span>
+                                    <span v-if="inputs.targetNewCustomers > inputs.currentNewCustomers" class="text-xs text-green-600 font-medium ml-1">
+                                        (+{{ inputs.targetNewCustomers - inputs.currentNewCustomers }})
+                                    </span>
+                                </div>
+                            </div>
+                            <input type="range" min="0" max="100" step="1" v-model.number="inputs.targetNewCustomers" 
+                                class="w-full bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                             <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>0</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- インパクト分析 (Tips) -->
+                <transition name="fade">
+                    <div v-if="inputs.currentChurnRate !== inputs.targetChurnRate || inputs.currentNewCustomers !== inputs.targetNewCustomers" class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-5 border border-emerald-100 shadow-sm">
+                        <h3 class="text-sm font-bold text-emerald-800 uppercase tracking-wide mb-2 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Improvement Impact
+                        </h3>
+                        <p class="text-sm text-emerald-900 leading-relaxed">
+                            改善策を実行すると、現状維持の場合と比較して、1年後に
+                            <span class="font-bold text-lg text-emerald-700">
+                                {{ formatNumber(oneYearLaterMrr - baselineOneYearMrr) }}万円
+                            </span>
+                            のMRR上積みが期待できます。
+                        </p>
+                    </div>
+                </transition>
+
+            </div>
+
+            <!-- 右カラム：グラフと結果 -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <!-- KPI カードグリッド -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- 1年後 MRR -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                        <div class="text-sm text-slate-500 mb-1">1年後の予測MRR</div>
+                        <div class="text-2xl font-bold text-slate-800">¥{{ formatNumber(oneYearLaterMrr) }}<span class="text-sm font-normal text-slate-500">万</span></div>
+                        <div class="mt-2 text-xs font-medium" :class="growthRate1y >= 0 ? 'text-green-600' : 'text-red-600'">
+                            <span v-if="growthRate1y >= 0">↗</span> {{ growthRate1y }}% (現在比)
+                        </div>
+                    </div>
+
+                    <!-- 3年後 MRR -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                        <div class="text-sm text-slate-500 mb-1">3年後の予測MRR</div>
+                        <div class="text-2xl font-bold text-slate-800">¥{{ formatNumber(threeYearsLaterMrr) }}<span class="text-sm font-normal text-slate-500">万</span></div>
+                        <div class="mt-2 text-xs font-medium" :class="growthRate3y >= 0 ? 'text-green-600' : 'text-red-600'">
+                             <span v-if="growthRate3y >= 0">↗</span> {{ growthRate3y }}% (現在比)
+                        </div>
+                    </div>
+
+                    <!-- LTV -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                        <div class="text-sm text-slate-500 mb-1">目標LTV (顧客生涯価値)</div>
+                        <div class="text-2xl font-bold text-indigo-600">¥{{ formatNumber(ltv) }}</div>
+                        <div class="mt-2 text-xs text-slate-400 flex items-center gap-1">
+                            現状: ¥{{ formatNumber(currentLtv) }} 
+                            <span v-if="ltv > currentLtv" class="text-green-500 font-bold"> (↑)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- メイングラフ -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold text-slate-800">36ヶ月 MRR成長予測</h3>
+                        <div class="flex gap-4 text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+                                <span class="text-slate-600">目標シナリオ</span>
+                            </div>
+                             <div class="flex items-center gap-2">
+                                <div class="w-4 h-0 border-t-2 border-slate-400 border-dashed"></div>
+                                <span class="text-slate-600">現状維持</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative h-80 w-full">
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 比較テーブル -->
+                <div class="bg-white overflow-hidden rounded-xl shadow-sm border border-slate-200">
+                     <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">期間</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">予測MRR (目標)</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">対 現状維持差分</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">顧客数</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">現在 (Start)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-slate-600">¥{{ formatNumber(inputs.currentMrr) }}万</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-slate-400">-</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-slate-600">{{ formatNumber(inputs.currentCustomers) }}</td>
+                            </tr>
+                            <tr class="bg-indigo-50/30">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-900">12ヶ月後</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-indigo-700">¥{{ formatNumber(oneYearLaterMrr) }}万</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-green-600 font-medium">+¥{{ formatNumber(oneYearLaterMrr - baselineOneYearMrr) }}万</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-indigo-700">{{ formatNumber(dataPoints[11].customers) }}</td>
+                            </tr>
+                             <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">24ヶ月後</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-slate-600">¥{{ formatNumber(dataPoints[23].mrr) }}万</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-green-600 font-medium">+¥{{ formatNumber(dataPoints[23].mrr - baselineDataPoints[23].mrr) }}万</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-slate-600">{{ formatNumber(dataPoints[23].customers) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">36ヶ月後</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-slate-600">¥{{ formatNumber(threeYearsLaterMrr) }}万</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-green-600 font-medium">+¥{{ formatNumber(threeYearsLaterMrr - baselineDataPoints[35].mrr) }}万</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-slate-600">{{ formatNumber(dataPoints[35].customers) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const { createApp, ref, computed, watch, onMounted } = Vue;
+
+    createApp({
+        setup() {
+            // 初期データ
+            const inputs = ref({
+                // Baseline Inputs (現状)
+                currentMrr: 1000, // 万円
+                currentCustomers: 200, // 社
+                currentChurnRate: 2.0, // % (現状の解約率)
+                currentNewCustomers: 10, // 社/月 (現状の獲得ペース)
+
+                // Target Inputs (目標/シミュレーション用)
+                targetChurnRate: 1.5, // %
+                targetNewCustomers: 15 // 社/月
+            });
+
+            // チャートのインスタンス保持用
+            let chartInstance = null;
+
+            // ARPU (Average Revenue Per User) の計算
+            const computedArpu = computed(() => {
+                if (inputs.value.currentCustomers <= 0) return 0;
+                return Math.round((inputs.value.currentMrr * 10000) / inputs.value.currentCustomers);
+            });
+
+            // LTV (Life Time Value) の計算 (目標値)
+            const ltv = computed(() => {
+                if (inputs.value.targetChurnRate <= 0) return 0;
+                return Math.round(computedArpu.value / (inputs.value.targetChurnRate / 100));
+            });
+            
+            // LTV (現状値)
+            const currentLtv = computed(() => {
+                 if (inputs.value.currentChurnRate <= 0) return 0;
+                return Math.round(computedArpu.value / (inputs.value.currentChurnRate / 100));
+            });
+
+            // 汎用シミュレーション関数
+            const calculateSimulation = (startMrr, startCustomers, churnRate, newCustomers, arpuWanEn) => {
+                const data = [];
+                let mrr = startMrr;
+                let customers = startCustomers;
+
+                for (let i = 1; i <= 36; i++) {
+                    const churned = customers * (churnRate / 100);
+                    const netNew = newCustomers - churned;
+                    
+                    customers += netNew;
+                    if (customers < 0) customers = 0;
+
+                    mrr = customers * arpuWanEn;
+
+                    data.push({
+                        month: i,
+                        mrr: Math.round(mrr * 10) / 10,
+                        customers: Math.round(customers)
+                    });
+                }
+                return data;
+            };
+
+            // 目標シナリオのデータ (Target)
+            const simulationData = computed(() => {
+                const arpuWanEn = inputs.value.currentCustomers > 0 ? inputs.value.currentMrr / inputs.value.currentCustomers : 0;
+                return calculateSimulation(
+                    inputs.value.currentMrr,
+                    inputs.value.currentCustomers,
+                    inputs.value.targetChurnRate,
+                    inputs.value.targetNewCustomers,
+                    arpuWanEn
+                );
+            });
+
+            // 現状維持シナリオのデータ (Baseline)
+            const baselineData = computed(() => {
+                const arpuWanEn = inputs.value.currentCustomers > 0 ? inputs.value.currentMrr / inputs.value.currentCustomers : 0;
+                return calculateSimulation(
+                    inputs.value.currentMrr,
+                    inputs.value.currentCustomers,
+                    inputs.value.currentChurnRate,
+                    inputs.value.currentNewCustomers,
+                    arpuWanEn
+                );
+            });
+
+            const oneYearLaterMrr = computed(() => simulationData.value[11]?.mrr || 0);
+            const threeYearsLaterMrr = computed(() => simulationData.value[35]?.mrr || 0);
+            const baselineOneYearMrr = computed(() => baselineData.value[11]?.mrr || 0);
+
+            const growthRate1y = computed(() => {
+                if(inputs.value.currentMrr === 0) return 0;
+                return Math.round(((oneYearLaterMrr.value - inputs.value.currentMrr) / inputs.value.currentMrr) * 100);
+            });
+
+            const growthRate3y = computed(() => {
+                if(inputs.value.currentMrr === 0) return 0;
+                return Math.round(((threeYearsLaterMrr.value - inputs.value.currentMrr) / inputs.value.currentMrr) * 100);
+            });
+
+            const formatNumber = (num) => {
+                return new Intl.NumberFormat('ja-JP').format(Math.round(num));
+            };
+
+            // グラフ更新
+            const updateChart = () => {
+                if (!chartInstance) return;
+
+                const labels = Array.from({length: 36}, (_, i) => `${i + 1}ヶ月後`);
+                const targetMrrData = simulationData.value.map(d => d.mrr);
+                const baselineMrrData = baselineData.value.map(d => d.mrr);
+
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets[0].data = targetMrrData;
+                chartInstance.data.datasets[1].data = baselineMrrData;
+                chartInstance.update();
+            };
+
+            const initChart = () => {
+                const ctx = document.getElementById('growthChart').getContext('2d');
+                
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: '目標シナリオ',
+                                data: [],
+                                borderColor: '#4f46e5', // Indigo 600
+                                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: '現状維持',
+                                data: [],
+                                borderColor: '#94a3b8', // Slate 400
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                fill: false,
+                                pointRadius: 0,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += '¥' + new Intl.NumberFormat('ja-JP').format(context.parsed.y) + '万';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                grid: { color: '#f1f5f9' }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: {
+                                    callback: function(val, index) {
+                                        return index % 6 === 5 || index === 0 ? this.getLabelForValue(val) : '';
+                                    }
+                                }
+                            }
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        }
+                    }
+                });
+                updateChart();
+            };
+
+            onMounted(() => {
+                initChart();
+            });
+
+            watch(inputs, () => {
+                updateChart();
+            }, { deep: true });
+
+            return {
+                inputs,
+                computedArpu,
+                ltv,
+                currentLtv,
+                oneYearLaterMrr,
+                threeYearsLaterMrr,
+                baselineOneYearMrr,
+                growthRate1y,
+                growthRate3y,
+                formatNumber,
+                dataPoints: simulationData,
+                baselineDataPoints: baselineData
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
