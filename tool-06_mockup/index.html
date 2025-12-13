@@ -1103,22 +1103,25 @@
                     }
                     
             document.fonts.ready.then(() => {
-                        // html2canvasにサイズを明示的に指定
-                        // widthとheightを明示的に指定してアスペクト比を維持
-                        html2canvas(target, { 
-                            backgroundColor: null, // 透明背景
-                            scale: 2, 
-                            logging: false, 
-                            useCORS: false, // file://プロトコルでは使用不可
-                            allowTaint: true, // tainted canvasを許可（file://プロトコルでは必要）
-                            removeContainer: false,
-                            imageTimeout: 15000,
-                            foreignObjectRendering: false, // foreignObjectを無効化
-                            width: finalWidth,
-                            height: finalHeight,
-                            windowWidth: finalWidth,
-                            windowHeight: finalHeight
-                        }).then(canvas => {
+                        // 要素のサイズを再度確認して明示的に設定
+                        target.style.width = `${finalWidth}px`;
+                        target.style.height = `${finalHeight}px`;
+                        
+                        // 少し待ってからhtml2canvasを実行（レイアウトが確定するまで）
+                        setTimeout(() => {
+                            // html2canvasにサイズを明示的に指定
+                            html2canvas(target, { 
+                                backgroundColor: null, // 透明背景
+                                scale: 2, 
+                                logging: false, 
+                                useCORS: false, // file://プロトコルでは使用不可
+                                allowTaint: true, // tainted canvasを許可（file://プロトコルでは必要）
+                                removeContainer: false,
+                                imageTimeout: 15000,
+                                foreignObjectRendering: false, // foreignObjectを無効化
+                                windowWidth: finalWidth,
+                                windowHeight: finalHeight
+                            }).then(canvas => {
                             // キャンバスが空でないか確認
                             if (canvas.width === 0 || canvas.height === 0) {
                                 throw new Error('キャンバスのサイズが0です');
@@ -1182,7 +1185,7 @@
                                     }
                                 }, 'image/png');
                             }
-                        }).catch(err => {
+                            }).catch(err => {
                             console.error('画像の生成に失敗しました:', err);
                             alert('画像の生成に失敗しました。\n\nエラー: ' + (err.message || '不明なエラー') + '\n\nローカルファイル（file://）では制限がある場合があります。\nWebサーバー経由でアクセスしてください。');
                             // スタイルを元に戻す
@@ -1198,6 +1201,7 @@
                                 screenArea.style.height = '';
                             }
                         });
+                        }, 50); // レイアウトが確定するまで少し待つ
                     });
                 }, 300);
             });
