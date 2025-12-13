@@ -121,8 +121,8 @@
                     <div class="flex w-full">
                         <button onclick="switchTab('preset')" id="tab-preset" class="flex-1 py-2 text-xs rounded transition tab-active">既存の画面から選ぶ</button>
                         <button onclick="switchTab('builder')" id="tab-builder" class="flex-1 py-2 text-xs rounded transition tab-inactive">カスタマイズ</button>
+                        <button onclick="switchTab('upload')" id="tab-upload" class="flex-1 py-2 text-xs rounded transition tab-inactive">画像アップロード</button>
                     </div>
-                    <button onclick="switchTab('upload')" id="tab-upload" class="w-full py-2 text-xs rounded transition tab-inactive">画像アップロード</button>
                 </div>
 
                 <!-- Tab 1: Existing Screen Preset -->
@@ -253,7 +253,7 @@
         <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#9ca3af 1px, transparent 1px); background-size: 20px 20px;"></div>
 
         <!-- Capture Target -->
-        <div id="capture-wrapper" class="relative shadow-2xl transition-all duration-300">
+        <div id="capture-wrapper" class="relative transition-all duration-300">
             <!-- LAYER 1: DEVICE FRAME (z-20) -->
             <!-- PC Frame -->
             <img id="frame-pc" src="device/pc-mockup.png" class="layer-frame absolute inset-0 pointer-events-none w-full h-full object-contain" alt="PC Frame">
@@ -309,10 +309,10 @@
         // モックアップ画像の実際の画面部分のサイズに合わせて調整
         const screenAreaConfig = {
             pc: {
-                leftPx: 59.5,        // 左からの位置（px固定）
-                topPx: 8,            // 上からの位置（px固定）
-                widthPx: 539,        // 幅（px固定）
-                heightPx: 382.4      // 高さ（px固定）
+                leftPx: 53.5,        // 左からの位置（px固定）
+                topPx: 5,           // 上からの位置（px固定）
+                widthPx: 492,       // 幅（px固定）
+                heightPx: 349.4     // 高さ（px固定）
             },
             mobile: {
                 leftPercent: 12,      // 左からの位置（%）
@@ -455,9 +455,9 @@
             
             let targetWidth, targetHeight;
             
-            // PCの場合は幅を654pxに固定
+            // PCの場合は幅を600pxに固定
             if (type === 'pc') {
-                targetWidth = 654;
+                targetWidth = 600;
                 // 高さはアスペクト比を維持して計算
                 if (imageSize.width > 0 && imageSize.height > 0) {
                     const aspectRatio = imageSize.height / imageSize.width;
@@ -491,8 +491,17 @@
             }
             
             // サイズを設定
-            els.wrapper.style.width = `${targetWidth}px`;
-            els.wrapper.style.height = `${targetHeight}px`;
+            if (type === 'pc') {
+                // PCの場合は600pxに固定して中央配置
+                els.wrapper.style.width = `${targetWidth}px`;
+                els.wrapper.style.height = `${targetHeight}px`;
+                els.wrapper.style.margin = '0 auto';
+            } else {
+                // スマホの場合は100%
+                els.wrapper.style.width = '100%';
+                els.wrapper.style.height = '100%';
+                els.wrapper.style.margin = '0';
+            }
             els.wrapper.style.borderRadius = '0';
             
             // 枠の表示/非表示
