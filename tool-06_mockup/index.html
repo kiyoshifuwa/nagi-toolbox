@@ -46,7 +46,7 @@
         }
         
         /* Layer Z-Index Management */
-        .layer-content { z-index: 10; }
+        #screen-area { z-index: 10; }
         .layer-frame { z-index: 20; pointer-events: none; }
 
         /* Editable highlight */
@@ -73,14 +73,14 @@
         /* Preset/Builder Buttons */
         .btn-select {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            justify-content: center;
-            padding: 10px;
+            justify-content: flex-start;
+            padding: 6px 10px;
             border: 1px solid #e5e7eb;
-            border-radius: 8px;
+            border-radius: 6px;
             background-color: white;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
             color: #4b5563;
             transition: all 0.2s;
@@ -96,7 +96,8 @@
             color: #0055e8;
         }
         .btn-select i {
-            font-size: 18px;
+            font-size: 14px;
+            flex-shrink: 0;
         }
     </style>
 </head>
@@ -111,84 +112,74 @@
 
         <div class="flex-1 overflow-y-auto p-5 space-y-8">
             
-            <!-- Step 1: Device Selection -->
+            <!-- Step 1: Content Mode -->
             <section>
-                <h3 class="text-sm font-bold uppercase text-gray-400 mb-3 tracking-wider">1. デバイスを選択</h3>
-                <div class="grid grid-cols-2 gap-2 mb-3">
-                    <button onclick="setDevice('pc')" id="btn-dev-pc" class="dev-btn ring-2 ring-tunag-blue bg-blue-50 p-3 rounded-lg border border-gray-200 flex flex-col items-center gap-2 hover:bg-gray-50 transition">
-                        <i class="fa-solid fa-desktop text-xl text-gray-600"></i>
-                        <span class="text-xs font-medium">PC</span>
-                    </button>
-                    <button onclick="setDevice('mobile')" id="btn-dev-mobile" class="dev-btn p-3 rounded-lg border border-gray-200 flex flex-col items-center gap-2 hover:bg-gray-50 transition">
-                        <i class="fa-solid fa-mobile-screen text-xl text-gray-600"></i>
-                        <span class="text-xs font-medium">スマホ</span>
-                    </button>
-                </div>
-                <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                    <input type="checkbox" id="checkbox-no-frame" onchange="toggleFrame()" class="w-4 h-4 text-tunag-blue border-gray-300 rounded focus:ring-tunag-blue">
-                    <label for="checkbox-no-frame" class="text-sm text-gray-700 cursor-pointer">枠を表示しない</label>
-                </div>
-            </section>
-
-            <!-- Step 2: Content Mode -->
-            <section>
-                <h3 class="text-sm font-bold uppercase text-gray-400 mb-3 tracking-wider">2. コンテンツを選択</h3>
+                <h3 class="text-sm font-bold uppercase text-gray-400 mb-3 tracking-wider">1. コンテンツを選択</h3>
                 
                 <!-- Tab Headers -->
                 <div class="flex flex-col bg-gray-100 p-1 rounded-lg mb-4 gap-1">
                     <div class="flex w-full">
-                        <button onclick="switchTab('upload')" id="tab-upload" class="flex-1 py-2 text-xs rounded transition tab-active">画像アップロード</button>
-                        <button onclick="switchTab('preset')" id="tab-preset" class="flex-1 py-2 text-xs rounded transition tab-inactive">既存の画面から選ぶ</button>
+                        <button onclick="switchTab('preset')" id="tab-preset" class="flex-1 py-2 text-xs rounded transition tab-active">既存の画面から選ぶ</button>
+                        <button onclick="switchTab('builder')" id="tab-builder" class="flex-1 py-2 text-xs rounded transition tab-inactive">カスタマイズ</button>
                     </div>
-                    <button onclick="switchTab('builder')" id="tab-builder" class="w-full py-2 text-xs rounded transition tab-inactive">カスタマイズ</button>
+                    <button onclick="switchTab('upload')" id="tab-upload" class="w-full py-2 text-xs rounded transition tab-inactive">画像アップロード</button>
                 </div>
 
-                <!-- Tab 1: Image Upload -->
-                <div id="content-upload" class="space-y-4">
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer relative">
-                        <input type="file" id="imageInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleImageUpload(this)">
-                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-300 mb-2"></i>
-                        <p class="text-sm text-gray-500">スクリーンショットを選択</p>
-                        <p class="text-xs text-gray-400 mt-1">(PNG, JPG 対応)</p>
-                    </div>
-                    <p class="text-xs text-tunag-blue"><i class="fa-solid fa-circle-info mr-1"></i>画像を選択するとトリミング画面が開きます</p>
-                </div>
-
-                <!-- Tab 2: Existing Screen Preset (6 Buttons) -->
-                <div id="content-preset" class="hidden space-y-3">
+                <!-- Tab 1: Existing Screen Preset -->
+                <div id="content-preset" class="space-y-3">
                     <p class="text-xs text-gray-500 mb-2">プリセットを選択してください（クリックで適用）</p>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="applyPreset('timeline')" class="btn-select">
+                    
+                    <!-- タイムライン（独立） -->
+                    <div class="mb-4">
+                        <button onclick="applyPreset('timeline')" class="btn-select w-full">
                             <i class="fa-regular fa-newspaper text-blue-500"></i>
                             タイムライン
                         </button>
-                        <button onclick="applyPreset('chat')" class="btn-select">
-                            <i class="fa-regular fa-comments text-green-500"></i>
-                            チャット
-                        </button>
-                        <button onclick="applyPreset('menu')" class="btn-select">
-                            <i class="fa-solid fa-bars text-gray-600"></i>
-                            制度一覧
-                        </button>
-                        <button onclick="applyPreset('profile')" class="btn-select">
-                            <i class="fa-regular fa-id-card text-purple-500"></i>
-                            プロフィール
-                        </button>
-                        <button onclick="applyPreset('calendar')" class="btn-select">
-                            <i class="fa-regular fa-calendar text-orange-500"></i>
-                            カレンダー
-                        </button>
-                        <button onclick="applyPreset('notice')" class="btn-select">
-                            <i class="fa-solid fa-bullhorn text-red-500"></i>
-                            お知らせ
-                        </button>
+                    </div>
+                    
+                    <!-- 制度詳細系 -->
+                    <div class="mb-4">
+                        <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">制度詳細</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="applyPreset('thankscard')" class="btn-select">
+                                <i class="fa-solid fa-heart text-pink-500"></i>
+                                サンクスカード
+                            </button>
+                            <button onclick="applyPreset('company_notice')" class="btn-select">
+                                <i class="fa-solid fa-bullhorn text-blue-500"></i>
+                                会社からのお知らせ
+                            </button>
+                            <button onclick="applyPreset('monthly_award')" class="btn-select">
+                                <i class="fa-solid fa-trophy text-yellow-500"></i>
+                                月間表彰
+                            </button>
+                            <button onclick="applyPreset('president_message')" class="btn-select">
+                                <i class="fa-solid fa-user-tie text-indigo-500"></i>
+                                社長メッセージ
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 投稿詳細系 -->
+                    <div class="mb-4">
+                        <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">投稿詳細</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="applyPreset('post_company_notice')" class="btn-select">
+                                <i class="fa-solid fa-bullhorn text-green-500"></i>
+                                会社からのお知らせ
+                            </button>
+                            <button onclick="applyPreset('post_president_message')" class="btn-select">
+                                <i class="fa-solid fa-user-tie text-purple-500"></i>
+                                社長メッセージ
+                            </button>
+                        </div>
                     </div>
                     <div class="mt-2 bg-blue-50 border border-blue-100 rounded p-3 text-xs text-blue-800">
                         <i class="fa-solid fa-check mr-1"></i> プレビュー内の文字はクリックして編集可能です。
                     </div>
                 </div>
 
-                <!-- Tab 3: Customize (Simple Builder) -->
+                <!-- Tab 2: Customize (Simple Builder) -->
                 <div id="content-builder" class="hidden space-y-3">
                     <p class="text-xs text-gray-500 mb-2">ベースとなる画面タイプを選択して編集</p>
                     <div class="grid grid-cols-2 gap-2 mb-3">
@@ -214,6 +205,36 @@
                         </ul>
                     </div>
                 </div>
+
+                <!-- Tab 3: Image Upload -->
+                <div id="content-upload" class="hidden space-y-4">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer relative">
+                        <input type="file" id="imageInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleImageUpload(this)">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-300 mb-2"></i>
+                        <p class="text-sm text-gray-500">スクリーンショットを選択</p>
+                        <p class="text-xs text-gray-400 mt-1">(PNG, JPG 対応)</p>
+                    </div>
+                    <p class="text-xs text-tunag-blue"><i class="fa-solid fa-circle-info mr-1"></i>画像を選択するとトリミング画面が開きます</p>
+                </div>
+            </section>
+
+            <!-- Step 2: Device Selection -->
+            <section>
+                <h3 class="text-sm font-bold uppercase text-gray-400 mb-3 tracking-wider">2. デバイスを選択</h3>
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <button onclick="setDevice('pc')" id="btn-dev-pc" class="dev-btn ring-2 ring-tunag-blue bg-blue-50 p-3 rounded-lg border border-gray-200 flex flex-col items-center gap-2 hover:bg-gray-50 transition">
+                        <i class="fa-solid fa-desktop text-xl text-gray-600"></i>
+                        <span class="text-xs font-medium">PC</span>
+                    </button>
+                    <button onclick="setDevice('mobile')" id="btn-dev-mobile" class="dev-btn p-3 rounded-lg border border-gray-200 flex flex-col items-center gap-2 hover:bg-gray-50 transition">
+                        <i class="fa-solid fa-mobile-screen text-xl text-gray-600"></i>
+                        <span class="text-xs font-medium">スマホ</span>
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                    <input type="checkbox" id="checkbox-no-frame" onchange="toggleFrame()" class="w-4 h-4 text-tunag-blue border-gray-300 rounded focus:ring-tunag-blue">
+                    <label for="checkbox-no-frame" class="text-sm text-gray-700 cursor-pointer">枠を表示しない</label>
+                </div>
             </section>
 
         </div>
@@ -233,7 +254,6 @@
 
         <!-- Capture Target -->
         <div id="capture-wrapper" class="relative shadow-2xl transition-all duration-300">
-            
             <!-- LAYER 1: DEVICE FRAME (z-20) -->
             <!-- PC Frame -->
             <img id="frame-pc" src="device/pc-mockup.png" class="layer-frame absolute inset-0 pointer-events-none w-full h-full object-contain" alt="PC Frame">
@@ -241,8 +261,8 @@
             <!-- Mobile Frame -->
             <img id="frame-mobile" src="device/sp-mockup.png" class="layer-frame absolute inset-0 pointer-events-none w-full h-full object-contain hidden" alt="Mobile Frame">
 
-            <!-- LAYER 2: CONTENT (z-10) -->
-            <div id="preview-content" class="layer-content w-full h-full bg-white overflow-hidden relative flex items-center justify-center">
+            <!-- LAYER 2: SCREEN AREA (z-10) - モックアップ画像の画面部分に配置されるdiv -->
+            <div id="screen-area" class="absolute overflow-hidden bg-white">
                 <!-- Placeholder -->
                 <div id="content-placeholder" class="w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-300 absolute inset-0">
                     <i class="fa-solid fa-image text-4xl mb-2"></i>
@@ -250,14 +270,13 @@
                 </div>
                 
                 <!-- Image -->
-                <img id="content-img" src="" class="object-contain hidden" alt="User Content" style="max-width: 100%; max-height: 100%;">
+                <img id="content-img" src="" class="w-full h-full object-contain hidden" alt="User Content">
 
                 <!-- HTML Builder -->
                 <div id="content-html" class="w-full h-full hidden overflow-hidden">
                     <!-- Injected via JS -->
                 </div>
             </div>
-
         </div>
     </main>
 
@@ -286,15 +305,26 @@
             none: { width: 800, height: 600, aspectRatio: NaN }
         };
         
-        // 画像のサイズ調整設定（枠の内側に収めるための調整値）
-        const imageSizeAdjust = {
-            pc: { widthPercent: 82, heightPercent: 82 }, // PC: 82%のサイズで中央配置
-            mobile: { widthPercent: 72, heightPercent: 72 } // スマホ: 72%のサイズで中央配置
+        // モックアップ画像の画面部分の位置とサイズ（px指定またはモックアップ画像サイズに対する比率）
+        // モックアップ画像の実際の画面部分のサイズに合わせて調整
+        const screenAreaConfig = {
+            pc: {
+                leftPx: 59.5,        // 左からの位置（px固定）
+                topPx: 8,            // 上からの位置（px固定）
+                widthPx: 539,        // 幅（px固定）
+                heightPx: 382.4      // 高さ（px固定）
+            },
+            mobile: {
+                leftPercent: 12,      // 左からの位置（%）
+                topPercent: 10,       // 上からの位置（%）
+                widthPercent: 76,     // 幅（%）
+                heightPercent: 55     // 高さ（%）- モックアップ画像の高さに合わせて調整
+            }
         };
 
         let state = {
             device: 'pc',
-            mode: 'upload', 
+            mode: 'preset', // デフォルトを「既存の画面から選ぶ」に変更
             cropper: null,
             lastPreset: 'timeline',
             lastBuilder: 'timeline',
@@ -314,17 +344,18 @@
         window.onload = () => {
             // DOM要素を取得
             els = {
-                wrapper: document.getElementById('capture-wrapper'),
-                framePc: document.getElementById('frame-pc'),
-                frameMobile: document.getElementById('frame-mobile'),
-                contentPlaceholder: document.getElementById('content-placeholder'),
-                contentImg: document.getElementById('content-img'),
-                contentHtml: document.getElementById('content-html'),
-                modal: document.getElementById('cropper-modal'),
-                cropperImg: document.getElementById('cropper-target'),
-                input: document.getElementById('imageInput')
-            };
-            
+            wrapper: document.getElementById('capture-wrapper'),
+            framePc: document.getElementById('frame-pc'),
+            frameMobile: document.getElementById('frame-mobile'),
+            screenArea: document.getElementById('screen-area'),
+            contentPlaceholder: document.getElementById('content-placeholder'),
+            contentImg: document.getElementById('content-img'),
+            contentHtml: document.getElementById('content-html'),
+            modal: document.getElementById('cropper-modal'),
+            cropperImg: document.getElementById('cropper-target'),
+            input: document.getElementById('imageInput')
+        };
+
             // 要素が存在するか確認
             if (!els.wrapper) {
                 console.error('DOM要素が見つかりません');
@@ -354,6 +385,8 @@
                 loadedCount++;
                 if (loadedCount === totalImages) {
                     setDevice('pc');
+                    // デフォルトでpresetタブを表示
+                    switchTab('preset');
                 }
             };
             
@@ -401,9 +434,12 @@
             updateSizeAndFrame();
             
             // コンテンツの再読み込み
-            if(state.mode === 'preset' && state.lastPreset === 'timeline') {
-                // タイムライン画像を再読み込み
-                applyPreset('timeline');
+            if(state.mode === 'preset') {
+                // 画像プリセットの場合は再読み込み
+                const imagePresets = ['timeline', 'thankscard', 'company_notice', 'monthly_award', 'president_message', 'post_company_notice', 'post_president_message'];
+                if (imagePresets.includes(state.lastPreset)) {
+                    applyPreset(state.lastPreset);
+                }
             } else if(state.mode === 'upload' && els.contentImg && els.contentImg.src) {
                 // アップロード画像がある場合はサイズを再調整
                 setTimeout(() => updateImageSize(), 100);
@@ -419,19 +455,33 @@
             
             let targetWidth, targetHeight;
             
-            if (imageSize.width > 0 && imageSize.height > 0) {
-                // 画像のサイズを使用
-                targetWidth = imageSize.width;
-                targetHeight = imageSize.height;
+            // PCの場合は幅を654pxに固定
+            if (type === 'pc') {
+                targetWidth = 654;
+                // 高さはアスペクト比を維持して計算
+                if (imageSize.width > 0 && imageSize.height > 0) {
+                    const aspectRatio = imageSize.height / imageSize.width;
+                    targetHeight = targetWidth * aspectRatio;
+                } else {
+                    // デフォルトサイズを使用
+                    const dims = config[type];
+                    const aspectRatio = dims.height / dims.width;
+                    targetHeight = targetWidth * aspectRatio;
+                }
             } else {
-                // デフォルトサイズを使用
-                const dims = config[type];
-                targetWidth = dims.width;
-                targetHeight = dims.height;
-            }
-            
-            // スマホの場合、ウインドウ縦幅の85%を上限とする（アスペクト比を維持）
-            if (type === 'mobile') {
+                // スマホの場合
+                if (imageSize.width > 0 && imageSize.height > 0) {
+                    // 画像のサイズを使用
+                    targetWidth = imageSize.width;
+                    targetHeight = imageSize.height;
+                } else {
+                    // デフォルトサイズを使用
+                    const dims = config[type];
+                    targetWidth = dims.width;
+                    targetHeight = dims.height;
+                }
+                
+                // スマホの場合、ウインドウ縦幅の85%を上限とする（アスペクト比を維持）
                 const maxHeight = window.innerHeight * 0.85;
                 if (targetHeight > maxHeight) {
                     const scale = maxHeight / targetHeight;
@@ -448,43 +498,56 @@
             // 枠の表示/非表示
             updateFrameVisibility();
             
+            // screen-areaの位置とサイズを設定
+            updateScreenArea();
+            
             // 画像のサイズを調整
             updateImageSize();
         }
         
-        // 画像のサイズを調整（枠の内側に収める）
+        // screen-areaの位置とサイズを設定
+        function updateScreenArea() {
+            if (!els.screenArea || !els.wrapper) return;
+            
+            const type = state.device;
+            const config = screenAreaConfig[type];
+            
+            if (!config) return;
+            
+            const wrapperWidth = els.wrapper.offsetWidth || els.wrapper.clientWidth;
+            const wrapperHeight = els.wrapper.offsetHeight || els.wrapper.clientHeight;
+            
+            if (wrapperWidth > 0 && wrapperHeight > 0) {
+                // leftはpx指定がある場合はそれを使用、なければパーセンテージから計算
+                const left = config.leftPx !== undefined ? config.leftPx : (wrapperWidth * config.leftPercent) / 100;
+                // topはpx指定がある場合はそれを使用、なければパーセンテージから計算
+                const top = config.topPx !== undefined ? config.topPx : (wrapperHeight * config.topPercent) / 100;
+                // widthはpx指定がある場合はそれを使用、なければパーセンテージから計算
+                const width = config.widthPx !== undefined ? config.widthPx : (wrapperWidth * config.widthPercent) / 100;
+                // heightはpx指定がある場合はそれを使用、なければパーセンテージから計算
+                const height = config.heightPx !== undefined ? config.heightPx : (wrapperHeight * config.heightPercent) / 100;
+                
+                // screen-areaの位置とサイズを設定
+                els.screenArea.style.left = `${left}px`;
+                els.screenArea.style.top = `${top}px`;
+                els.screenArea.style.width = `${width}px`;
+                els.screenArea.style.height = `${height}px`;
+            }
+        }
+        
+        // 画像のサイズを調整（screen-area内に収める）
         function updateImageSize() {
-            if (!els.contentImg || !els.wrapper) return;
+            if (!els.contentImg || !els.screenArea) return;
             
             // 画像が表示されていない場合はスキップ
             if (els.contentImg.classList.contains('hidden') || !els.contentImg.src) return;
             
-            const type = state.device;
-            const adjust = imageSizeAdjust[type];
-            
-            if (adjust && (type === 'pc' || type === 'mobile')) {
-                // 親要素のサイズを取得（少し待ってから取得）
-                setTimeout(() => {
-                    const wrapperWidth = els.wrapper.offsetWidth || els.wrapper.clientWidth;
-                    const wrapperHeight = els.wrapper.offsetHeight || els.wrapper.clientHeight;
-                    
-                    if (wrapperWidth > 0 && wrapperHeight > 0) {
-                        // 調整値を適用
-                        const imageWidth = (wrapperWidth * adjust.widthPercent) / 100;
-                        const imageHeight = (wrapperHeight * adjust.heightPercent) / 100;
-                        
-                        // 画像のサイズを設定
-                        els.contentImg.style.width = `${imageWidth}px`;
-                        els.contentImg.style.height = `${imageHeight}px`;
-                        els.contentImg.style.objectFit = 'contain';
-                    }
-                }, 10);
-            } else {
-                // デフォルト（枠なしの場合など）
-                els.contentImg.style.width = '100%';
-                els.contentImg.style.height = '100%';
-                els.contentImg.style.objectFit = 'cover';
-            }
+            // screen-areaのサイズに合わせて画像を配置
+            // screen-areaは既にoverflow: hiddenが設定されているので、
+            // 画像は100%のサイズでcontainで配置すればはみ出さない
+            els.contentImg.style.width = '100%';
+            els.contentImg.style.height = '100%';
+            els.contentImg.style.objectFit = 'contain';
         }
         
         // 枠の表示/非表示を更新
@@ -496,7 +559,7 @@
                 if (els.framePc) {
                     if (showFrame) {
                         els.framePc.style.display = 'block';
-                        els.framePc.classList.remove('hidden');
+                els.framePc.classList.remove('hidden');
                     } else {
                         els.framePc.style.display = 'none';
                         els.framePc.classList.add('hidden');
@@ -504,20 +567,20 @@
                 }
                 if (els.frameMobile) {
                     els.frameMobile.style.display = 'none';
-                    els.frameMobile.classList.add('hidden');
+                els.frameMobile.classList.add('hidden');
                 }
             } else if (type === 'mobile') {
                 if (els.framePc) {
                     els.framePc.style.display = 'none';
-                    els.framePc.classList.add('hidden');
+                els.framePc.classList.add('hidden');
                 }
                 if (els.frameMobile) {
                     if (showFrame) {
                         els.frameMobile.style.display = 'block';
-                        els.frameMobile.classList.remove('hidden');
-                    } else {
+                els.frameMobile.classList.remove('hidden');
+            } else {
                         els.frameMobile.style.display = 'none';
-                        els.frameMobile.classList.add('hidden');
+                els.frameMobile.classList.add('hidden');
                     }
                 }
             }
@@ -544,11 +607,11 @@
                 const el = document.getElementById(`tab-${t}`);
                 const contentEl = document.getElementById(`content-${t}`);
                 if (el && contentEl) {
-                    if (t === mode) {
-                        el.className = el.className.replace('tab-inactive', 'tab-active');
+                if (t === mode) {
+                    el.className = el.className.replace('tab-inactive', 'tab-active');
                         contentEl.classList.remove('hidden');
-                    } else {
-                        el.className = el.className.replace('tab-active', 'tab-inactive');
+                } else {
+                    el.className = el.className.replace('tab-active', 'tab-inactive');
                         contentEl.classList.add('hidden');
                     }
                 }
@@ -558,8 +621,8 @@
             if (mode === 'upload') {
                 if (els.contentHtml) els.contentHtml.classList.add('hidden');
                 if (els.contentImg && els.contentImg.src) {
-                    els.contentImg.classList.remove('hidden');
-                    els.contentPlaceholder.classList.add('hidden');
+                els.contentImg.classList.remove('hidden');
+                els.contentPlaceholder.classList.add('hidden');
                     // 画像のサイズを再調整
                     setTimeout(() => updateImageSize(), 100);
                 } else {
@@ -575,7 +638,7 @@
                 } else {
                     if (els.contentImg) els.contentImg.classList.add('hidden');
                     if (els.contentHtml) els.contentHtml.classList.remove('hidden');
-                    applyPreset(state.lastPreset);
+                applyPreset(state.lastPreset); 
                 }
             } else if (mode === 'builder') {
                 if (els.contentImg) els.contentImg.classList.add('hidden');
@@ -592,8 +655,8 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     if (els.cropperImg) {
-                        els.cropperImg.src = e.target.result;
-                        openModal();
+                    els.cropperImg.src = e.target.result;
+                    openModal();
                     }
                 };
                 reader.readAsDataURL(input.files[0]);
@@ -656,17 +719,57 @@
 
             // Update UI Button Styles
             document.querySelectorAll('#content-preset .btn-select').forEach(btn => {
-                // simple check based on onclick attr text
-                if(btn.getAttribute('onclick').includes(type)) btn.classList.add('active');
-                else btn.classList.remove('active');
+                // onclick属性から正確にプリセットタイプを抽出して完全一致で判定
+                const onclickAttr = btn.getAttribute('onclick') || '';
+                // applyPreset('type')の形式から'type'を抽出
+                const match = onclickAttr.match(/applyPreset\(['"]([^'"]+)['"]\)/);
+                const buttonType = match ? match[1] : '';
+                // 完全一致で判定
+                if(buttonType === type) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
             });
 
-            // タイムラインの場合は画像を読み込む
-            if (type === 'timeline') {
+            // 画像プリセットのマッピング
+            const imagePresets = {
+                'timeline': {
+                    pc: 'preset/timeline_001_pc.png',
+                    mobile: 'preset/timeline_001_sp.png'
+                },
+                'thankscard': {
+                    pc: 'preset/制度詳細_PC_サンクスカード.png',
+                    mobile: 'preset/制度詳細_SP_サンクスカード.png'
+                },
+                'company_notice': {
+                    pc: 'preset/制度詳細_PC_会社からのお知らせ.png',
+                    mobile: 'preset/制度詳細_SP_会社からのお知らせ.png'
+                },
+                'monthly_award': {
+                    pc: 'preset/制度詳細_PC_月間表彰.png',
+                    mobile: 'preset/制度詳細_SP_月間表彰.png'
+                },
+                'president_message': {
+                    pc: 'preset/制度詳細_PC_社長メッセージ.png',
+                    mobile: 'preset/制度詳細_SP_社長メッセージ.png'
+                },
+                'post_company_notice': {
+                    pc: 'preset/投稿詳細_PC_会社からのお知らせ.png',
+                    mobile: 'preset/投稿詳細_SP_会社からのお知らせ.png'
+                },
+                'post_president_message': {
+                    pc: 'preset/投稿詳細_PC_社長メッセージ.png',
+                    mobile: 'preset/投稿詳細_SP_社長メッセージ.png'
+                }
+            };
+            
+            // 画像プリセットの場合は画像を読み込む
+            if (imagePresets[type]) {
                 // デバイスに応じて画像を選択
                 const imagePath = state.device === 'pc' 
-                    ? 'preset/timeline_001_pc.png' 
-                    : 'preset/timeline_001_sp.png';
+                    ? imagePresets[type].pc 
+                    : imagePresets[type].mobile;
                 
                 // 画像を表示
                 if (els.contentImg) {
@@ -824,7 +927,7 @@
                     </div>`;
             }
             if (els.contentHtml) {
-                els.contentHtml.innerHTML = html;
+            els.contentHtml.innerHTML = html;
             }
         }
 
@@ -921,7 +1024,7 @@
                     </div>`;
             }
             if (els.contentHtml) {
-                els.contentHtml.innerHTML = html;
+            els.contentHtml.innerHTML = html;
             }
         }
 
@@ -949,7 +1052,7 @@
             // 一時的にスタイルを調整（ダウンロード用）
             const originalWidth = target.style.width;
             const originalHeight = target.style.height;
-            target.style.boxShadow = 'none';
+            target.style.boxShadow = 'none'; 
             target.style.backgroundColor = 'transparent';
             target.style.overflow = 'visible';
             // サイズを明示的に固定（アスペクト比を維持）
@@ -999,8 +1102,18 @@
                         return;
                     }
                     
-                    document.fonts.ready.then(() => {
-                        // html2canvasにサイズを明示的に指定しない（要素の自然なサイズを使用）
+            document.fonts.ready.then(() => {
+                        // 内部要素のサイズも固定
+                        const screenArea = target.querySelector('#screen-area');
+                        const originalScreenWidth = screenArea ? screenArea.style.width : '';
+                        const originalScreenHeight = screenArea ? screenArea.style.height : '';
+                        
+                        if (screenArea) {
+                            screenArea.style.width = `${finalWidth}px`;
+                            screenArea.style.height = `${finalHeight}px`;
+                        }
+                        
+                        // html2canvasにサイズを明示的に指定
                         html2canvas(target, { 
                             backgroundColor: null, // 透明背景
                             scale: 2, 
@@ -1009,7 +1122,9 @@
                             allowTaint: true, // tainted canvasを許可（file://プロトコルでは必要）
                             removeContainer: false,
                             imageTimeout: 15000,
-                            foreignObjectRendering: false // foreignObjectを無効化
+                            foreignObjectRendering: false, // foreignObjectを無効化
+                            windowWidth: finalWidth,
+                            windowHeight: finalHeight
                         }).then(canvas => {
                             // キャンバスが空でないか確認
                             if (canvas.width === 0 || canvas.height === 0) {
@@ -1022,16 +1137,27 @@
                             const widthDiff = Math.abs(canvas.width - expectedWidth) / expectedWidth;
                             const heightDiff = Math.abs(canvas.height - expectedHeight) / expectedHeight;
                             
-                            // サイズの差が10%以上ある場合は警告
+                            // サイズの差が10%以上ある場合はキャンバスをリサイズ
+                            let finalCanvas = canvas;
                             if (widthDiff > 0.1 || heightDiff > 0.1) {
-                                console.warn('キャンバスサイズが期待値と異なります:', {
+                                console.warn('キャンバスサイズが期待値と異なります。リサイズします:', {
                                     expected: { width: expectedWidth, height: expectedHeight },
                                     actual: { width: canvas.width, height: canvas.height }
                                 });
+                                
+                                // 新しいキャンバスを作成してリサイズ
+                                const resizedCanvas = document.createElement('canvas');
+                                resizedCanvas.width = expectedWidth;
+                                resizedCanvas.height = expectedHeight;
+                                const ctx = resizedCanvas.getContext('2d');
+                                
+                                // 元のキャンバスをリサイズして描画
+                                ctx.drawImage(canvas, 0, 0, expectedWidth, expectedHeight);
+                                finalCanvas = resizedCanvas;
                             }
                             
                             // スタイルを元に戻す
-                            target.style.boxShadow = originalShadow;
+                    target.style.boxShadow = originalShadow;
                             target.style.backgroundColor = originalBg;
                             target.style.overflow = originalOverflow;
                             target.style.width = originalWidth;
@@ -1041,14 +1167,14 @@
                             try {
                                 const link = document.createElement('a');
                                 link.download = `tunag-mockup-${Date.now()}.png`;
-                                link.href = canvas.toDataURL('image/png', 1.0);
+                                link.href = finalCanvas.toDataURL('image/png', 1.0);
                                 document.body.appendChild(link);
                                 link.click();
                                 document.body.removeChild(link);
                             } catch (e) {
                                 // toDataURLが失敗した場合、blob URLを使用
                                 console.warn('toDataURLに失敗、blob URLを試行:', e);
-                                canvas.toBlob((blob) => {
+                                finalCanvas.toBlob((blob) => {
                                     if (blob) {
                                         const url = URL.createObjectURL(blob);
                                         const link = document.createElement('a');
@@ -1072,6 +1198,12 @@
                             target.style.overflow = originalOverflow;
                             target.style.width = originalWidth;
                             target.style.height = originalHeight;
+                            
+                            const screenArea = target.querySelector('#screen-area');
+                            if (screenArea) {
+                                screenArea.style.width = '';
+                                screenArea.style.height = '';
+                            }
                         });
                     });
                 }, 300);
