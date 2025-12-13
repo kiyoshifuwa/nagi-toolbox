@@ -937,22 +937,24 @@
             const originalBg = target.style.backgroundColor;
             const originalOverflow = target.style.overflow;
             
-            // 一時的にスタイルを調整（ダウンロード用）
-            target.style.boxShadow = 'none';
-            target.style.backgroundColor = 'transparent';
-            target.style.overflow = 'visible';
-            
-            // 要素のサイズを確認
+            // 要素のサイズを確認（スタイル変更前）
             const width = target.offsetWidth || target.clientWidth;
             const height = target.offsetHeight || target.clientHeight;
             
             if (width === 0 || height === 0) {
                 alert('要素のサイズが0です。コンテンツを確認してください。');
-                target.style.boxShadow = originalShadow;
-                target.style.backgroundColor = originalBg;
-                target.style.overflow = originalOverflow;
                 return;
             }
+            
+            // 一時的にスタイルを調整（ダウンロード用）
+            const originalWidth = target.style.width;
+            const originalHeight = target.style.height;
+            target.style.boxShadow = 'none';
+            target.style.backgroundColor = 'transparent';
+            target.style.overflow = 'visible';
+            // サイズを明示的に固定（アスペクト比を維持）
+            target.style.width = `${width}px`;
+            target.style.height = `${height}px`;
             
             // すべての画像が読み込まれるまで待つ
             const waitForImages = (element) => {
@@ -985,7 +987,20 @@
             // 画像の読み込みを待ってからhtml2canvasを実行
             waitForImages(target).then(() => {
                 setTimeout(() => {
+                    // 再度サイズを取得（画像読み込み後の正確なサイズ）
+                    const finalWidth = target.offsetWidth || target.clientWidth;
+                    const finalHeight = target.offsetHeight || target.clientHeight;
+                    
+                    if (finalWidth === 0 || finalHeight === 0) {
+                        alert('要素のサイズが0です。コンテンツを確認してください。');
+                        target.style.boxShadow = originalShadow;
+                        target.style.backgroundColor = originalBg;
+                        target.style.overflow = originalOverflow;
+                        return;
+                    }
+                    
                     document.fonts.ready.then(() => {
+                        // html2canvasにサイズを明示的に指定しない（要素の自然なサイズを使用）
                         html2canvas(target, { 
                             backgroundColor: null, // 透明背景
                             scale: 2, 
@@ -994,10 +1009,6 @@
                             allowTaint: true, // tainted canvasを許可（file://プロトコルでは必要）
                             removeContainer: false,
                             imageTimeout: 15000,
-                            width: width,
-                            height: height,
-                            x: 0,
-                            y: 0,
                             foreignObjectRendering: false // foreignObjectを無効化
                         }).then(canvas => {
                             // キャンバスが空でないか確認
@@ -1005,10 +1016,26 @@
                                 throw new Error('キャンバスのサイズが0です');
                             }
                             
+                            // キャンバスのサイズが要素のサイズと大きく異なる場合は調整
+                            const expectedWidth = finalWidth * 2; // scale: 2
+                            const expectedHeight = finalHeight * 2;
+                            const widthDiff = Math.abs(canvas.width - expectedWidth) / expectedWidth;
+                            const heightDiff = Math.abs(canvas.height - expectedHeight) / expectedHeight;
+                            
+                            // サイズの差が10%以上ある場合は警告
+                            if (widthDiff > 0.1 || heightDiff > 0.1) {
+                                console.warn('キャンバスサイズが期待値と異なります:', {
+                                    expected: { width: expectedWidth, height: expectedHeight },
+                                    actual: { width: canvas.width, height: canvas.height }
+                                });
+                            }
+                            
                             // スタイルを元に戻す
                             target.style.boxShadow = originalShadow;
                             target.style.backgroundColor = originalBg;
                             target.style.overflow = originalOverflow;
+                            target.style.width = originalWidth;
+                            target.style.height = originalHeight;
                             
                             // ダウンロード（tainted canvasでもtoDataURLは動作する）
                             try {
@@ -1043,6 +1070,8 @@
                             target.style.boxShadow = originalShadow;
                             target.style.backgroundColor = originalBg;
                             target.style.overflow = originalOverflow;
+                            target.style.width = originalWidth;
+                            target.style.height = originalHeight;
                         });
                     });
                 }, 300);
