@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUNAG モックアップ作成ツール</title>
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tunag: {
+                            blue: '#0055e8',
+                            light: '#f4f6f9',
+                            dark: '#1a202c'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        
+        /* Device Frames - PNG画像を使用 */
+        .device-frame-img {
+            object-fit: contain;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        /* Canvas Area */
+        #preview-canvas {
+            transition: all 0.3s ease;
+        }
+        
+        /* Layer Z-Index Management */
+        .layer-content { z-index: 10; }
+        .layer-frame { z-index: 20; pointer-events: none; }
+
+        /* Editable highlight */
+        [contenteditable]:hover {
+            outline: 1px dashed #0055e8;
+            cursor: text;
+        }
+        
+        /* Tab Active State Utility */
+        .tab-active {
+            background-color: white;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            color: #0055e8;
+            font-weight: 600;
+        }
+        .tab-inactive {
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .tab-inactive:hover {
+            color: #374151;
+        }
+
+        /* Preset/Builder Buttons */
+        .btn-select {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: white;
+            font-size: 12px;
+            font-weight: 500;
+            color: #4b5563;
+            transition: all 0.2s;
+            gap: 6px;
+        }
+        .btn-select:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+        }
+        .btn-select.active {
+            border-color: #0055e8;
+            background-color: #eff6ff;
+            color: #0055e8;
+        }
+        .btn-select i {
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex overflow-hidden font-sans text-gray-700">
+
+    <!-- LEFT: Settings Panel -->
+    <aside class="w-1/3 min-w-[340px] bg-white border-r border-gray-200 flex flex-col h-full shadow-lg z-30">
+        <div class="p-5 border-b border-gray-100">
+            <h1 class="text-2xl font-bold text-tunag-blue"><i class="fa-solid fa-layer-group mr-2"></i>Mockup Tool</h1>
+            <p class="text-xs text-gray-400 mt-1">TUNAG モックアップ作成ツール</p>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-5 space-y-8">
+            
+            <!-- Step 1: Device Selection -->
+            <section>
+                <h3 class="text-sm font-bold uppercase text-gray-400 mb-3 tracking-wider">1. デバイスを選択</h3>
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <button onclick="setDevice('pc')" id="btn-dev-pc" class="dev-btn ring-2 ring-tunag-blue bg-blue-50 p-3 rounded-lg border border-gray-200 flex flex-col items-center gap-2 hover:bg-gray-50 transition">
+                        <i class="fa-solid fa-desktop text-xl text-gray-600"></i>
+                        <span class="text-xs font-medium">PC</span>
+                    </button>
+                    <button onclick="setDevice('mobile')" id="btn-dev-mobile" class="dev-btn p-3 rounded-lg border border-gray-200 flex flex-col items-center gap-2 hover:bg-gray-50 transition">
+                        <i class="fa-solid fa-mobile-screen text-xl text-gray-600"></i>
+                        <span class="text-xs font-medium">スマホ</span>
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                    <input type="checkbox" id="checkbox-no-frame" onchange="toggleFrame()" class="w-4 h-4 text-tunag-blue border-gray-300 rounded focus:ring-tunag-blue">
+                    <label for="checkbox-no-frame" class="text-sm text-gray-700 cursor-pointer">枠を表示しない</label>
+                </div>
+            </section>
+
+            <!-- Step 2: Content Mode -->
+            <section>
+                <h3 class="text-sm font-bold uppercase text-gray-400 mb-3 tracking-wider">2. コンテンツを選択</h3>
+                
+                <!-- Tab Headers -->
+                <div class="flex flex-col bg-gray-100 p-1 rounded-lg mb-4 gap-1">
+                    <div class="flex w-full">
+                        <button onclick="switchTab('upload')" id="tab-upload" class="flex-1 py-2 text-xs rounded transition tab-active">画像アップロード</button>
+                        <button onclick="switchTab('preset')" id="tab-preset" class="flex-1 py-2 text-xs rounded transition tab-inactive">既存の画面から選ぶ</button>
+                    </div>
+                    <button onclick="switchTab('builder')" id="tab-builder" class="w-full py-2 text-xs rounded transition tab-inactive">カスタマイズ</button>
+                </div>
+
+                <!-- Tab 1: Image Upload -->
+                <div id="content-upload" class="space-y-4">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer relative">
+                        <input type="file" id="imageInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleImageUpload(this)">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-300 mb-2"></i>
+                        <p class="text-sm text-gray-500">スクリーンショットを選択</p>
+                        <p class="text-xs text-gray-400 mt-1">(PNG, JPG 対応)</p>
+                    </div>
+                    <p class="text-xs text-tunag-blue"><i class="fa-solid fa-circle-info mr-1"></i>画像を選択するとトリミング画面が開きます</p>
+                </div>
+
+                <!-- Tab 2: Existing Screen Preset (6 Buttons) -->
+                <div id="content-preset" class="hidden space-y-3">
+                    <p class="text-xs text-gray-500 mb-2">プリセットを選択してください（クリックで適用）</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="applyPreset('timeline')" class="btn-select">
+                            <i class="fa-regular fa-newspaper text-blue-500"></i>
+                            タイムライン
+                        </button>
+                        <button onclick="applyPreset('chat')" class="btn-select">
+                            <i class="fa-regular fa-comments text-green-500"></i>
+                            チャット
+                        </button>
+                        <button onclick="applyPreset('menu')" class="btn-select">
+                            <i class="fa-solid fa-bars text-gray-600"></i>
+                            制度一覧
+                        </button>
+                        <button onclick="applyPreset('profile')" class="btn-select">
+                            <i class="fa-regular fa-id-card text-purple-500"></i>
+                            プロフィール
+                        </button>
+                        <button onclick="applyPreset('calendar')" class="btn-select">
+                            <i class="fa-regular fa-calendar text-orange-500"></i>
+                            カレンダー
+                        </button>
+                        <button onclick="applyPreset('notice')" class="btn-select">
+                            <i class="fa-solid fa-bullhorn text-red-500"></i>
+                            お知らせ
+                        </button>
+                    </div>
+                    <div class="mt-2 bg-blue-50 border border-blue-100 rounded p-3 text-xs text-blue-800">
+                        <i class="fa-solid fa-check mr-1"></i> プレビュー内の文字はクリックして編集可能です。
+                    </div>
+                </div>
+
+                <!-- Tab 3: Customize (Simple Builder) -->
+                <div id="content-builder" class="hidden space-y-3">
+                    <p class="text-xs text-gray-500 mb-2">ベースとなる画面タイプを選択して編集</p>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <button onclick="applyBuilder('timeline')" class="btn-select">
+                            <i class="fa-solid fa-list-ul"></i> タイムライン
+                        </button>
+                        <button onclick="applyBuilder('chat')" class="btn-select">
+                            <i class="fa-regular fa-comment-dots"></i> チャット
+                        </button>
+                        <button onclick="applyBuilder('portal')" class="btn-select">
+                            <i class="fa-solid fa-table-columns"></i> ポータル
+                        </button>
+                        <button onclick="applyBuilder('other')" class="btn-select">
+                            <i class="fa-solid fa-shapes"></i> その他
+                        </button>
+                    </div>
+                    
+                    <div class="p-3 border rounded bg-gray-50 text-xs text-gray-600">
+                        <p class="font-bold mb-1">編集のヒント:</p>
+                        <ul class="list-disc pl-4 space-y-1">
+                            <li>画面右側のプレビュー内の文字をクリックして書き換えてください。</li>
+                            <li>アイコンやレイアウトは仮のダミーです。</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Footer: Download -->
+        <div class="p-5 border-t border-gray-200 bg-gray-50">
+            <button onclick="downloadImage()" class="w-full bg-tunag-blue hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition flex justify-center items-center gap-2">
+                <i class="fa-solid fa-download"></i> 画像をダウンロード
+            </button>
+        </div>
+    </aside>
+
+    <!-- RIGHT: Preview Area -->
+    <main class="w-2/3 h-full bg-gray-200 flex items-center justify-center relative overflow-hidden pattern-bg">
+        <!-- Background Pattern -->
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#9ca3af 1px, transparent 1px); background-size: 20px 20px;"></div>
+
+        <!-- Capture Target -->
+        <div id="capture-wrapper" class="relative shadow-2xl transition-all duration-300">
+            
+            <!-- LAYER 1: DEVICE FRAME (z-20) -->
+            <!-- PC Frame -->
+            <img id="frame-pc" src="device/pc-mockup.png" class="layer-frame absolute inset-0 pointer-events-none w-full h-full object-contain" alt="PC Frame">
+
+            <!-- Mobile Frame -->
+            <img id="frame-mobile" src="device/sp-mockup.png" class="layer-frame absolute inset-0 pointer-events-none w-full h-full object-contain hidden" alt="Mobile Frame">
+
+            <!-- LAYER 2: CONTENT (z-10) -->
+            <div id="preview-content" class="layer-content w-full h-full bg-white overflow-hidden relative flex items-center justify-center">
+                <!-- Placeholder -->
+                <div id="content-placeholder" class="w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-300 absolute inset-0">
+                    <i class="fa-solid fa-image text-4xl mb-2"></i>
+                    <span class="text-sm font-medium">プレビューエリア</span>
+                </div>
+                
+                <!-- Image -->
+                <img id="content-img" src="" class="object-contain hidden" alt="User Content" style="max-width: 100%; max-height: 100%;">
+
+                <!-- HTML Builder -->
+                <div id="content-html" class="w-full h-full hidden overflow-hidden">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- MODAL: Cropper -->
+    <div id="cropper-modal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden flex flex-col items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-gray-700">画像の切り抜き</h3>
+                <button onclick="closeCropper()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <div class="flex-1 bg-gray-100 relative overflow-hidden flex items-center justify-center p-2">
+                <img id="cropper-target" src="" class="max-w-full max-h-full block">
+            </div>
+            <div class="p-4 border-t bg-gray-50 flex justify-end gap-3">
+                <button onclick="closeCropper()" class="px-4 py-2 rounded text-gray-600 hover:bg-gray-200 transition">キャンセル</button>
+                <button onclick="applyCrop()" class="px-6 py-2 rounded bg-tunag-blue text-white font-bold hover:bg-blue-700 transition">決定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration & State ---
+        const config = {
+            pc: { width: 800, height: 600, aspectRatio: 800/600 },
+            mobile: { width: 375, height: 812, aspectRatio: 375/812 }, 
+            none: { width: 800, height: 600, aspectRatio: NaN }
+        };
+        
+        // 画像のサイズ調整設定（枠の内側に収めるための調整値）
+        const imageSizeAdjust = {
+            pc: { widthPercent: 82, heightPercent: 82 }, // PC: 82%のサイズで中央配置
+            mobile: { widthPercent: 72, heightPercent: 72 } // スマホ: 72%のサイズで中央配置
+        };
+
+        let state = {
+            device: 'pc',
+            mode: 'upload', 
+            cropper: null,
+            lastPreset: 'timeline',
+            lastBuilder: 'timeline',
+            showFrame: true  // 枠を表示するかどうか
+        };
+
+        // --- DOM Elements ---
+        let els = {};
+        
+        // 画像のサイズを保持
+        let frameImageSizes = {
+            pc: { width: 0, height: 0 },
+            mobile: { width: 0, height: 0 }
+        };
+
+        // --- Initialization ---
+        window.onload = () => {
+            // DOM要素を取得
+            els = {
+                wrapper: document.getElementById('capture-wrapper'),
+                framePc: document.getElementById('frame-pc'),
+                frameMobile: document.getElementById('frame-mobile'),
+                contentPlaceholder: document.getElementById('content-placeholder'),
+                contentImg: document.getElementById('content-img'),
+                contentHtml: document.getElementById('content-html'),
+                modal: document.getElementById('cropper-modal'),
+                cropperImg: document.getElementById('cropper-target'),
+                input: document.getElementById('imageInput')
+            };
+            
+            // 要素が存在するか確認
+            if (!els.wrapper) {
+                console.error('DOM要素が見つかりません');
+                return;
+            }
+            
+            // 画像の読み込みを待つ
+            loadFrameImages();
+            
+            // ウインドウリサイズ時の処理
+            window.addEventListener('resize', () => {
+                if (state.device === 'mobile') {
+                    updateSizeAndFrame();
+                }
+            });
+        };
+        
+        // 画像を読み込んでサイズを取得
+        function loadFrameImages() {
+            const pcImg = new Image();
+            const mobileImg = new Image();
+            
+            let loadedCount = 0;
+            const totalImages = 2;
+            
+            const checkAllLoaded = () => {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    setDevice('pc');
+                }
+            };
+            
+            pcImg.onload = () => {
+                frameImageSizes.pc = { width: pcImg.naturalWidth, height: pcImg.naturalHeight };
+                checkAllLoaded();
+            };
+            pcImg.onerror = () => {
+                console.error('PC画像の読み込みに失敗しました');
+                // デフォルトサイズを使用
+                frameImageSizes.pc = { width: 800, height: 600 };
+                checkAllLoaded();
+            };
+            pcImg.src = 'device/pc-mockup.png';
+            
+            mobileImg.onload = () => {
+                frameImageSizes.mobile = { width: mobileImg.naturalWidth, height: mobileImg.naturalHeight };
+                checkAllLoaded();
+            };
+            mobileImg.onerror = () => {
+                console.error('Mobile画像の読み込みに失敗しました');
+                // デフォルトサイズを使用
+                frameImageSizes.mobile = { width: 375, height: 812 };
+                checkAllLoaded();
+            };
+            mobileImg.src = 'device/sp-mockup.png';
+        }
+
+        // --- Device Handling ---
+        function setDevice(type) {
+            if (!els.wrapper) return; // DOM要素が初期化されていない場合は終了
+            
+            state.device = type;
+            
+            // UI Button Active State
+            document.querySelectorAll('.dev-btn').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-tunag-blue', 'bg-blue-50');
+            });
+            const btnEl = document.getElementById(`btn-dev-${type}`);
+            if (btnEl) {
+                btnEl.classList.add('ring-2', 'ring-tunag-blue', 'bg-blue-50');
+            }
+
+            // サイズと枠の表示を更新
+            updateSizeAndFrame();
+            
+            // コンテンツの再読み込み
+            if(state.mode === 'preset' && state.lastPreset === 'timeline') {
+                // タイムライン画像を再読み込み
+                applyPreset('timeline');
+            } else if(state.mode === 'upload' && els.contentImg && els.contentImg.src) {
+                // アップロード画像がある場合はサイズを再調整
+                setTimeout(() => updateImageSize(), 100);
+            }
+        }
+        
+        // サイズと枠の表示を更新
+        function updateSizeAndFrame() {
+            if (!els.wrapper) return;
+            
+            const type = state.device;
+            const imageSize = frameImageSizes[type];
+            
+            let targetWidth, targetHeight;
+            
+            if (imageSize.width > 0 && imageSize.height > 0) {
+                // 画像のサイズを使用
+                targetWidth = imageSize.width;
+                targetHeight = imageSize.height;
+            } else {
+                // デフォルトサイズを使用
+                const dims = config[type];
+                targetWidth = dims.width;
+                targetHeight = dims.height;
+            }
+            
+            // スマホの場合、ウインドウ縦幅の85%を上限とする（アスペクト比を維持）
+            if (type === 'mobile') {
+                const maxHeight = window.innerHeight * 0.85;
+                if (targetHeight > maxHeight) {
+                    const scale = maxHeight / targetHeight;
+                    targetWidth = targetWidth * scale;
+                    targetHeight = maxHeight;
+                }
+            }
+            
+            // サイズを設定
+            els.wrapper.style.width = `${targetWidth}px`;
+            els.wrapper.style.height = `${targetHeight}px`;
+            els.wrapper.style.borderRadius = '0';
+            
+            // 枠の表示/非表示
+            updateFrameVisibility();
+            
+            // 画像のサイズを調整
+            updateImageSize();
+        }
+        
+        // 画像のサイズを調整（枠の内側に収める）
+        function updateImageSize() {
+            if (!els.contentImg || !els.wrapper) return;
+            
+            // 画像が表示されていない場合はスキップ
+            if (els.contentImg.classList.contains('hidden') || !els.contentImg.src) return;
+            
+            const type = state.device;
+            const adjust = imageSizeAdjust[type];
+            
+            if (adjust && (type === 'pc' || type === 'mobile')) {
+                // 親要素のサイズを取得（少し待ってから取得）
+                setTimeout(() => {
+                    const wrapperWidth = els.wrapper.offsetWidth || els.wrapper.clientWidth;
+                    const wrapperHeight = els.wrapper.offsetHeight || els.wrapper.clientHeight;
+                    
+                    if (wrapperWidth > 0 && wrapperHeight > 0) {
+                        // 調整値を適用
+                        const imageWidth = (wrapperWidth * adjust.widthPercent) / 100;
+                        const imageHeight = (wrapperHeight * adjust.heightPercent) / 100;
+                        
+                        // 画像のサイズを設定
+                        els.contentImg.style.width = `${imageWidth}px`;
+                        els.contentImg.style.height = `${imageHeight}px`;
+                        els.contentImg.style.objectFit = 'contain';
+                    }
+                }, 10);
+            } else {
+                // デフォルト（枠なしの場合など）
+                els.contentImg.style.width = '100%';
+                els.contentImg.style.height = '100%';
+                els.contentImg.style.objectFit = 'cover';
+            }
+        }
+        
+        // 枠の表示/非表示を更新
+        function updateFrameVisibility() {
+            const type = state.device;
+            const showFrame = state.showFrame;
+            
+            if (type === 'pc') {
+                if (els.framePc) {
+                    if (showFrame) {
+                        els.framePc.style.display = 'block';
+                        els.framePc.classList.remove('hidden');
+                    } else {
+                        els.framePc.style.display = 'none';
+                        els.framePc.classList.add('hidden');
+                    }
+                }
+                if (els.frameMobile) {
+                    els.frameMobile.style.display = 'none';
+                    els.frameMobile.classList.add('hidden');
+                }
+            } else if (type === 'mobile') {
+                if (els.framePc) {
+                    els.framePc.style.display = 'none';
+                    els.framePc.classList.add('hidden');
+                }
+                if (els.frameMobile) {
+                    if (showFrame) {
+                        els.frameMobile.style.display = 'block';
+                        els.frameMobile.classList.remove('hidden');
+                    } else {
+                        els.frameMobile.style.display = 'none';
+                        els.frameMobile.classList.add('hidden');
+                    }
+                }
+            }
+        }
+        
+        // 枠の表示/非表示を切り替え
+        function toggleFrame() {
+            const checkbox = document.getElementById('checkbox-no-frame');
+            if (checkbox) {
+                state.showFrame = !checkbox.checked;
+                updateFrameVisibility();
+            }
+        }
+
+        // --- Tab Switching ---
+        function switchTab(mode) {
+            if (!els.contentImg || !els.contentHtml) return; // DOM要素が初期化されていない場合は終了
+            
+            state.mode = mode;
+            
+            // Reset Tabs
+            const tabs = ['upload', 'preset', 'builder'];
+            tabs.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                const contentEl = document.getElementById(`content-${t}`);
+                if (el && contentEl) {
+                    if (t === mode) {
+                        el.className = el.className.replace('tab-inactive', 'tab-active');
+                        contentEl.classList.remove('hidden');
+                    } else {
+                        el.className = el.className.replace('tab-active', 'tab-inactive');
+                        contentEl.classList.add('hidden');
+                    }
+                }
+            });
+
+            // Content Visibility Logic
+            if (mode === 'upload') {
+                if (els.contentHtml) els.contentHtml.classList.add('hidden');
+                if (els.contentImg && els.contentImg.src) {
+                    els.contentImg.classList.remove('hidden');
+                    els.contentPlaceholder.classList.add('hidden');
+                    // 画像のサイズを再調整
+                    setTimeout(() => updateImageSize(), 100);
+                } else {
+                    if (els.contentImg) els.contentImg.classList.add('hidden');
+                    if (els.contentPlaceholder) els.contentPlaceholder.classList.remove('hidden');
+                }
+            } else if (mode === 'preset') {
+                if (els.contentPlaceholder) els.contentPlaceholder.classList.add('hidden');
+                // タイムラインの場合は画像を表示、それ以外はHTMLを表示
+                if (state.lastPreset === 'timeline') {
+                    if (els.contentHtml) els.contentHtml.classList.add('hidden');
+                    applyPreset('timeline');
+                } else {
+                    if (els.contentImg) els.contentImg.classList.add('hidden');
+                    if (els.contentHtml) els.contentHtml.classList.remove('hidden');
+                    applyPreset(state.lastPreset);
+                }
+            } else if (mode === 'builder') {
+                if (els.contentImg) els.contentImg.classList.add('hidden');
+                if (els.contentPlaceholder) els.contentPlaceholder.classList.add('hidden');
+                if (els.contentHtml) els.contentHtml.classList.remove('hidden');
+                applyBuilder(state.lastBuilder);
+            }
+        }
+
+        // --- Image Upload & Cropper (Unchanged logic) ---
+        function handleImageUpload(input) {
+            if (!els.cropperImg) return;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (els.cropperImg) {
+                        els.cropperImg.src = e.target.result;
+                        openModal();
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+            input.value = '';
+        }
+
+        function openModal() {
+            if (!els.modal || !els.cropperImg) return;
+            els.modal.classList.remove('hidden');
+            if (state.cropper) state.cropper.destroy();
+            const image = els.cropperImg;
+            const ar = config[state.device].aspectRatio;
+            state.cropper = new Cropper(image, { aspectRatio: ar || NaN, viewMode: 1, autoCropArea: 1, background: false });
+        }
+
+        function closeCropper() {
+            if (!els.modal) return;
+            els.modal.classList.add('hidden');
+            if (state.cropper) {
+                state.cropper.destroy();
+                state.cropper = null;
+            }
+        }
+
+        function applyCrop() {
+            if (!state.cropper || !els.contentImg || !els.contentPlaceholder) return;
+            
+            // デバイスに応じたサイズで切り抜き
+            const deviceConfig = config[state.device];
+            const cropWidth = deviceConfig.width * 2;
+            const cropHeight = deviceConfig.height * 2;
+            
+            const canvas = state.cropper.getCroppedCanvas({ 
+                width: cropWidth, 
+                height: cropHeight,
+                fillColor: '#fff' 
+            });
+            
+            els.contentImg.src = canvas.toDataURL('image/png');
+            els.contentImg.classList.remove('hidden');
+            els.contentPlaceholder.classList.add('hidden');
+            closeCropper();
+            
+            // 画像読み込み後にサイズを調整
+            els.contentImg.onload = () => {
+                setTimeout(() => updateImageSize(), 50);
+            };
+            if (els.contentImg.complete) {
+                setTimeout(() => updateImageSize(), 50);
+            }
+        }
+
+        // --- Content Generation Helpers ---
+        const baseClass = "w-full h-full bg-gray-50 font-sans text-gray-800 overflow-hidden flex flex-col";
+        
+        // --- 1. Preset Logic (Rich Dummy Data) ---
+        function applyPreset(type) {
+            state.lastPreset = type;
+
+            // Update UI Button Styles
+            document.querySelectorAll('#content-preset .btn-select').forEach(btn => {
+                // simple check based on onclick attr text
+                if(btn.getAttribute('onclick').includes(type)) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            // タイムラインの場合は画像を読み込む
+            if (type === 'timeline') {
+                // デバイスに応じて画像を選択
+                const imagePath = state.device === 'pc' 
+                    ? 'preset/timeline_001_pc.png' 
+                    : 'preset/timeline_001_sp.png';
+                
+                // 画像を表示
+                if (els.contentImg) {
+                    // 既存のonloadイベントをクリア
+                    els.contentImg.onload = null;
+                    
+                    // 新しい画像を読み込む
+                    const img = new Image();
+                    img.onload = () => {
+                        els.contentImg.src = imagePath;
+                        els.contentImg.classList.remove('hidden');
+                        els.contentPlaceholder.classList.add('hidden');
+                        if (els.contentHtml) els.contentHtml.classList.add('hidden');
+                        // サイズを調整
+                        setTimeout(() => updateImageSize(), 50);
+                    };
+                    img.onerror = () => {
+                        console.error('画像の読み込みに失敗しました:', imagePath);
+                    };
+                    img.src = imagePath;
+                }
+                return;
+            }
+            
+            // その他のプリセットはHTMLを生成
+            let html = '';
+            
+            if (type === 'chat') {
+                html = `
+                     <div class="${baseClass}">
+                        <div class="h-14 bg-white border-b flex items-center px-4 gap-3 shrink-0">
+                            <i class="fa-solid fa-arrow-left text-gray-400"></i>
+                            <div class="font-bold flex-1" contenteditable="true">営業部グループ (8)</div>
+                            <i class="fa-solid fa-bars text-gray-400"></i>
+                        </div>
+                        <div class="flex-1 p-4 space-y-4 overflow-y-auto bg-blue-50/30">
+                            <div class="text-center text-xs text-gray-400 my-2">今日</div>
+                            <div class="flex gap-2">
+                                <div class="w-8 h-8 rounded-full bg-gray-200 shrink-0"></div>
+                                <div>
+                                    <div class="text-[10px] text-gray-500 mb-0.5">佐藤さん</div>
+                                    <div class="bg-white p-2.5 rounded-r-lg rounded-bl-lg shadow-sm border text-sm" contenteditable="true">お疲れ様です！例の資料確認しました。</div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 flex-row-reverse">
+                                <div class="bg-tunag-blue text-white p-2.5 rounded-l-lg rounded-br-lg shadow-sm text-sm max-w-[80%]" contenteditable="true">ありがとうございます。<br>修正して再送しますね。</div>
+                            </div>
+                        </div>
+                        <div class="h-14 bg-white border-t px-3 flex items-center gap-2 shrink-0">
+                            <i class="fa-solid fa-plus text-gray-400"></i>
+                            <div class="flex-1 h-9 bg-gray-100 rounded px-2 flex items-center text-sm text-gray-400">メッセージを入力...</div>
+                            <i class="fa-solid fa-paper-plane text-tunag-blue"></i>
+                        </div>
+                    </div>`;
+            } else if (type === 'menu') {
+                html = `
+                    <div class="${baseClass}">
+                        <div class="bg-tunag-blue p-5 text-white pb-10">
+                            <div class="font-bold text-xl mb-1" contenteditable="true">TUNAG Demo Inc.</div>
+                            <div class="text-sm opacity-80" contenteditable="true">エンゲージメント経営を実践中</div>
+                        </div>
+                        <div class="flex-1 bg-gray-50 -mt-6 rounded-t-xl px-4 pt-6 space-y-3 overflow-y-auto">
+                            <div class="flex justify-between mb-4 px-2">
+                                <div class="text-center"><div class="w-12 h-12 bg-white rounded-full shadow flex items-center justify-center text-tunag-blue mb-1 mx-auto"><i class="fa-solid fa-list"></i></div><span class="text-xs">制度一覧</span></div>
+                                <div class="text-center"><div class="w-12 h-12 bg-white rounded-full shadow flex items-center justify-center text-orange-500 mb-1 mx-auto"><i class="fa-solid fa-gift"></i></div><span class="text-xs">ポイント</span></div>
+                                <div class="text-center"><div class="w-12 h-12 bg-white rounded-full shadow flex items-center justify-center text-green-500 mb-1 mx-auto"><i class="fa-solid fa-users"></i></div><span class="text-xs">組織図</span></div>
+                                <div class="text-center"><div class="w-12 h-12 bg-white rounded-full shadow flex items-center justify-center text-purple-500 mb-1 mx-auto"><i class="fa-solid fa-user"></i></div><span class="text-xs">自分</span></div>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
+                                <span class="font-bold text-sm">お知らせ</span>
+                                <span class="w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center">3</span>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
+                                <span class="font-bold text-sm">未読のチャット</span>
+                                <i class="fa-solid fa-chevron-right text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (type === 'profile') {
+                html = `
+                    <div class="${baseClass}">
+                        <div class="h-32 bg-gray-300 relative">
+                            <div class="absolute -bottom-10 left-4 w-20 h-20 bg-white rounded-full p-1 shadow">
+                                <div class="w-full h-full bg-gray-200 rounded-full flex items-center justify-center"><i class="fa-solid fa-user text-2xl text-gray-400"></i></div>
+                            </div>
+                        </div>
+                        <div class="mt-12 px-4 pb-4 overflow-y-auto">
+                            <h2 class="text-lg font-bold" contenteditable="true">山田 太郎</h2>
+                            <p class="text-xs text-gray-500 mb-4" contenteditable="true">営業部 / マネージャー</p>
+                            
+                            <div class="space-y-3">
+                                <div class="bg-white p-3 rounded border border-gray-200">
+                                    <div class="text-xs text-gray-400 mb-1">自己紹介</div>
+                                    <div class="text-sm" contenteditable="true">休日は趣味のキャンプに行っています。よろしくお願いします。</div>
+                                </div>
+                                <div class="bg-white p-3 rounded border border-gray-200 flex justify-between items-center">
+                                    <span class="text-sm font-bold">サンクスカード</span>
+                                    <span class="text-tunag-blue font-bold">120枚</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (type === 'calendar') {
+                html = `
+                    <div class="${baseClass}">
+                        <div class="h-14 bg-white border-b flex items-center px-4 justify-between shrink-0">
+                            <i class="fa-solid fa-chevron-left text-gray-400"></i>
+                            <div class="font-bold">2023年 10月</div>
+                            <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                        </div>
+                        <div class="flex-1 p-4 overflow-y-auto">
+                            <!-- Calendar Grid Dummy -->
+                            <div class="grid grid-cols-7 gap-1 mb-4 text-center text-xs text-gray-500">
+                                <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
+                                <span class="p-2 text-gray-300">29</span><span class="p-2 text-gray-300">30</span><span class="p-2">1</span><span class="p-2">2</span><span class="p-2">3</span><span class="p-2">4</span><span class="p-2 text-blue-500">5</span>
+                                <span class="p-2">6</span><span class="p-2">7</span><span class="p-2">8</span><span class="p-2">9</span><span class="p-2 bg-blue-100 rounded-full text-blue-600 font-bold">10</span><span class="p-2">11</span><span class="p-2 text-blue-500">12</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="text-xs font-bold text-gray-500 mb-2">10月10日 (火)</div>
+                                <div class="bg-white p-3 rounded border-l-4 border-tunag-blue shadow-sm">
+                                    <div class="text-xs text-gray-400">10:00 - 11:00</div>
+                                    <div class="font-bold text-sm" contenteditable="true">全社ミーティング</div>
+                                </div>
+                                <div class="bg-white p-3 rounded border-l-4 border-green-500 shadow-sm">
+                                    <div class="text-xs text-gray-400">14:00 - 15:00</div>
+                                    <div class="font-bold text-sm" contenteditable="true">1on1 (佐藤)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (type === 'notice') {
+                html = `
+                    <div class="${baseClass}">
+                         <div class="h-14 bg-white border-b flex items-center px-4 gap-3 shrink-0">
+                            <i class="fa-solid fa-arrow-left text-gray-400"></i>
+                            <div class="font-bold flex-1">お知らせ</div>
+                        </div>
+                        <div class="flex-1 overflow-y-auto">
+                            <div class="bg-white p-4 border-b flex gap-3 hover:bg-gray-50">
+                                <div class="w-2 h-2 rounded-full bg-red-500 mt-2 shrink-0"></div>
+                                <div>
+                                    <div class="text-xs text-gray-400 mb-1">運営事務局 - 2023/10/10</div>
+                                    <div class="font-bold text-sm mb-1" contenteditable="true">システムメンテナンスのお知らせ</div>
+                                    <div class="text-xs text-gray-500">10/15 AM2:00よりメンテナンスを実施します。</div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 border-b flex gap-3 hover:bg-gray-50">
+                                <div class="w-2 h-2 rounded-full bg-transparent mt-2 shrink-0"></div>
+                                <div>
+                                    <div class="text-xs text-gray-400 mb-1">人事部 - 2023/10/05</div>
+                                    <div class="font-bold text-sm mb-1" contenteditable="true">健康診断の受診について</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+            if (els.contentHtml) {
+                els.contentHtml.innerHTML = html;
+            }
+        }
+
+        // --- 2. Customize (Builder) Logic (Generic Templates) ---
+        function applyBuilder(type) {
+            state.lastBuilder = type;
+            let html = '';
+            
+            // Update UI
+            document.querySelectorAll('#content-builder .btn-select').forEach(btn => {
+                if(btn.getAttribute('onclick').includes(type)) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            if (type === 'timeline') {
+                html = `
+                    <div class="${baseClass}">
+                        <div class="h-14 bg-white border-b flex items-center px-4 justify-between shrink-0">
+                            <div class="font-bold text-gray-800" contenteditable="true">タイムライン</div>
+                            <div class="w-8 h-8 rounded-full bg-gray-200"></div>
+                        </div>
+                        <div class="flex-1 p-4 space-y-4 overflow-y-auto">
+                            <!-- Generic Post Block -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-full bg-gray-200"></div>
+                                    <div>
+                                        <div class="font-bold text-sm" contenteditable="true">投稿者名</div>
+                                        <div class="text-xs text-gray-400" contenteditable="true">日付</div>
+                                    </div>
+                                    <div class="ml-auto text-xs px-2 py-1 bg-gray-100 rounded" contenteditable="true">カテゴリ</div>
+                                </div>
+                                <div class="text-sm text-gray-700 h-20 border border-dashed border-gray-200 rounded p-2 mb-3" contenteditable="true">
+                                    テキストを入力してください...
+                                </div>
+                                <div class="flex gap-4 text-gray-400 text-sm">
+                                    <span><i class="fa-regular fa-heart"></i></span>
+                                    <span><i class="fa-regular fa-comment"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (type === 'chat') {
+                html = `
+                    <div class="${baseClass}">
+                        <div class="h-14 bg-white border-b flex items-center px-4 gap-2 shrink-0">
+                            <i class="fa-solid fa-chevron-left text-gray-400"></i>
+                            <div class="font-bold text-gray-800" contenteditable="true">トークルーム名</div>
+                        </div>
+                        <div class="flex-1 p-4 space-y-4 overflow-y-auto bg-gray-50">
+                            <div class="flex gap-2">
+                                <div class="w-8 h-8 rounded-full bg-gray-200"></div>
+                                <div class="bg-white p-3 rounded-r-lg rounded-bl-lg shadow-sm border text-sm max-w-[80%]" contenteditable="true">相手のメッセージ</div>
+                            </div>
+                            <div class="flex gap-2 flex-row-reverse">
+                                <div class="bg-tunag-blue text-white p-3 rounded-l-lg rounded-br-lg shadow-sm text-sm max-w-[80%]" contenteditable="true">自分のメッセージ</div>
+                            </div>
+                        </div>
+                         <div class="h-14 bg-white border-t px-3 flex items-center gap-2 shrink-0">
+                            <div class="flex-1 h-9 bg-gray-100 rounded px-2 flex items-center text-sm text-gray-400">入力エリア...</div>
+                        </div>
+                    </div>`;
+            } else if (type === 'portal') {
+                html = `
+                    <div class="${baseClass}">
+                        <div class="bg-white p-4 border-b flex justify-between items-center shrink-0">
+                            <div class="font-bold" contenteditable="true">ポータル</div>
+                            <i class="fa-solid fa-bars"></i>
+                        </div>
+                        <div class="flex-1 p-4 overflow-y-auto">
+                            <div class="bg-white p-4 rounded shadow-sm border mb-4" contenteditable="true">
+                                <h3 class="font-bold mb-2">トップニュース</h3>
+                                <p class="text-sm text-gray-600">ここに重要な情報を配置します。</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-white p-4 rounded shadow-sm border h-24 flex items-center justify-center text-sm font-bold" contenteditable="true">メニューA</div>
+                                <div class="bg-white p-4 rounded shadow-sm border h-24 flex items-center justify-center text-sm font-bold" contenteditable="true">メニューB</div>
+                                <div class="bg-white p-4 rounded shadow-sm border h-24 flex items-center justify-center text-sm font-bold" contenteditable="true">メニューC</div>
+                                <div class="bg-white p-4 rounded shadow-sm border h-24 flex items-center justify-center text-sm font-bold" contenteditable="true">メニューD</div>
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (type === 'other') {
+                html = `
+                    <div class="${baseClass}">
+                        <div class="h-14 bg-white border-b flex items-center px-4 justify-between shrink-0">
+                            <div class="font-bold" contenteditable="true">ページタイトル</div>
+                            <i class="fa-solid fa-xmark text-gray-400"></i>
+                        </div>
+                        <div class="flex-1 p-5 overflow-y-auto flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 m-4 rounded">
+                            <i class="fa-solid fa-pen-ruler text-3xl mb-2"></i>
+                            <div contenteditable="true">自由編集エリア</div>
+                        </div>
+                    </div>`;
+            }
+            if (els.contentHtml) {
+                els.contentHtml.innerHTML = html;
+            }
+        }
+
+        // --- Download ---
+        function downloadImage() {
+            if (!els.wrapper) {
+                alert('ダウンロードするコンテンツがありません');
+                return;
+            }
+            
+            const target = els.wrapper;
+            const originalShadow = target.style.boxShadow;
+            const originalBg = target.style.backgroundColor;
+            const originalOverflow = target.style.overflow;
+            
+            // 一時的にスタイルを調整（ダウンロード用）
+            target.style.boxShadow = 'none';
+            target.style.backgroundColor = 'transparent';
+            target.style.overflow = 'visible';
+            
+            // 要素のサイズを確認
+            const width = target.offsetWidth || target.clientWidth;
+            const height = target.offsetHeight || target.clientHeight;
+            
+            if (width === 0 || height === 0) {
+                alert('要素のサイズが0です。コンテンツを確認してください。');
+                target.style.boxShadow = originalShadow;
+                target.style.backgroundColor = originalBg;
+                target.style.overflow = originalOverflow;
+                return;
+            }
+            
+            // すべての画像が読み込まれるまで待つ
+            const waitForImages = (element) => {
+                return new Promise((resolve) => {
+                    const images = element.querySelectorAll('img');
+                    let loadedCount = 0;
+                    const totalImages = images.length;
+                    
+                    if (totalImages === 0) {
+                        resolve();
+                        return;
+                    }
+                    
+                    images.forEach((img) => {
+                        if (img.complete && img.naturalHeight !== 0) {
+                            loadedCount++;
+                            if (loadedCount === totalImages) resolve();
+                        } else {
+                            const checkLoad = () => {
+                                loadedCount++;
+                                if (loadedCount === totalImages) resolve();
+                            };
+                            img.onload = checkLoad;
+                            img.onerror = checkLoad;
+                        }
+                    });
+                });
+            };
+            
+            // 画像の読み込みを待ってからhtml2canvasを実行
+            waitForImages(target).then(() => {
+                setTimeout(() => {
+                    document.fonts.ready.then(() => {
+                        html2canvas(target, { 
+                            backgroundColor: null, // 透明背景
+                            scale: 2, 
+                            logging: false, 
+                            useCORS: false, // file://プロトコルでは使用不可
+                            allowTaint: true, // tainted canvasを許可（file://プロトコルでは必要）
+                            removeContainer: false,
+                            imageTimeout: 15000,
+                            width: width,
+                            height: height,
+                            x: 0,
+                            y: 0,
+                            foreignObjectRendering: false // foreignObjectを無効化
+                        }).then(canvas => {
+                            // キャンバスが空でないか確認
+                            if (canvas.width === 0 || canvas.height === 0) {
+                                throw new Error('キャンバスのサイズが0です');
+                            }
+                            
+                            // スタイルを元に戻す
+                            target.style.boxShadow = originalShadow;
+                            target.style.backgroundColor = originalBg;
+                            target.style.overflow = originalOverflow;
+                            
+                            // ダウンロード（tainted canvasでもtoDataURLは動作する）
+                            try {
+                                const link = document.createElement('a');
+                                link.download = `tunag-mockup-${Date.now()}.png`;
+                                link.href = canvas.toDataURL('image/png', 1.0);
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            } catch (e) {
+                                // toDataURLが失敗した場合、blob URLを使用
+                                console.warn('toDataURLに失敗、blob URLを試行:', e);
+                                canvas.toBlob((blob) => {
+                                    if (blob) {
+                                        const url = URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.download = `tunag-mockup-${Date.now()}.png`;
+                                        link.href = url;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        URL.revokeObjectURL(url);
+                                    } else {
+                                        throw new Error('Blobの作成に失敗しました');
+                                    }
+                                }, 'image/png');
+                            }
+                        }).catch(err => {
+                            console.error('画像の生成に失敗しました:', err);
+                            alert('画像の生成に失敗しました。\n\nエラー: ' + (err.message || '不明なエラー') + '\n\nローカルファイル（file://）では制限がある場合があります。\nWebサーバー経由でアクセスしてください。');
+                            // スタイルを元に戻す
+                            target.style.boxShadow = originalShadow;
+                            target.style.backgroundColor = originalBg;
+                            target.style.overflow = originalOverflow;
+                        });
+                    });
+                }, 300);
+            });
+        }
+    </script>
+</body>
+</html>
