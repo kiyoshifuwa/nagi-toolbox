@@ -19,6 +19,7 @@
                     colors: {
                         tunag: {
                             blue: '#0055e8',
+                            cyan: '#00aac2',
                             light: '#f4f6f9',
                             dark: '#1a202c'
                         }
@@ -114,21 +115,20 @@
             
             <!-- Step 1: Content Mode -->
             <section>
-                <h3 class="text-sm font-bold uppercase text-gray-400 mb-3 tracking-wider">1. コンテンツを選択</h3>
+                <h3 class="text-sm font-bold uppercase mb-3 tracking-wider">1. コンテンツを選択</h3>
                 
                 <!-- Tab Headers -->
                 <div class="flex flex-col bg-gray-100 p-1 rounded-lg mb-4 gap-1">
                     <div class="flex w-full">
                         <button onclick="switchTab('preset')" id="tab-preset" class="flex-1 py-2 text-xs rounded transition tab-active">既存の画面から選ぶ</button>
                         <button onclick="switchTab('builder')" id="tab-builder" class="flex-1 py-2 text-xs rounded transition tab-inactive">カスタマイズ</button>
+                        <button onclick="switchTab('test')" id="tab-test" class="flex-1 py-2 text-xs rounded transition tab-inactive">テスト</button>
                         <button onclick="switchTab('upload')" id="tab-upload" class="flex-1 py-2 text-xs rounded transition tab-inactive">画像アップロード</button>
                     </div>
                 </div>
 
                 <!-- Tab 1: Existing Screen Preset -->
                 <div id="content-preset" class="space-y-3">
-                    <p class="text-xs text-gray-500 mb-2">プリセットを選択してください（クリックで適用）</p>
-                    
                     <!-- タイムライン（独立） -->
                     <div class="mb-4">
                         <button onclick="applyPreset('timeline')" class="btn-select w-full">
@@ -139,7 +139,7 @@
                     
                     <!-- 制度詳細系 -->
                     <div class="mb-4">
-                        <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">制度詳細</p>
+                        <p class="text-xs font-bold mb-2 uppercase tracking-wider">制度詳細</p>
                         <div class="grid grid-cols-2 gap-2">
                             <button onclick="applyPreset('thankscard')" class="btn-select">
                                 <i class="fa-solid fa-heart text-pink-500"></i>
@@ -162,7 +162,7 @@
                     
                     <!-- 投稿詳細系 -->
                     <div class="mb-4">
-                        <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">投稿詳細</p>
+                        <p class="text-xs font-bold mb-2 uppercase tracking-wider">投稿詳細</p>
                         <div class="grid grid-cols-2 gap-2">
                             <button onclick="applyPreset('post_company_notice')" class="btn-select">
                                 <i class="fa-solid fa-bullhorn text-green-500"></i>
@@ -174,8 +174,16 @@
                         </button>
                         </div>
                     </div>
-                    <div class="mt-2 bg-blue-50 border border-blue-100 rounded p-3 text-xs text-blue-800">
-                        <i class="fa-solid fa-check mr-1"></i> プレビュー内の文字はクリックして編集可能です。
+                </div>
+
+                <!-- Tab 3: Test -->
+                <div id="content-test" class="hidden space-y-3">
+                    <p class="text-xs text-gray-500 mb-2">テスト用の画面を選択</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="applyTest('test_timeline')" class="btn-select">
+                            <i class="fa-solid fa-list-ul text-orange-500"></i>
+                            タイムライン_社長
+                        </button>
                     </div>
                 </div>
 
@@ -218,19 +226,9 @@
                 </div>
             </section>
 
-            <!-- Step 2: Device Selection -->
+            <!-- Step 2: Frame Toggle -->
             <section>
-                <h3 class="text-sm font-bold uppercase text-gray-400 mb-3 tracking-wider">2. デバイスを選択</h3>
-                <div class="grid grid-cols-2 gap-2 mb-3">
-                    <button onclick="setDevice('pc')" id="btn-dev-pc" class="dev-btn ring-2 ring-tunag-blue bg-blue-50 p-3 rounded-lg border border-gray-200 flex flex-col items-center gap-2 hover:bg-gray-50 transition">
-                        <i class="fa-solid fa-desktop text-xl text-gray-600"></i>
-                        <span class="text-xs font-medium">PC</span>
-                    </button>
-                    <button onclick="setDevice('mobile')" id="btn-dev-mobile" class="dev-btn p-3 rounded-lg border border-gray-200 flex flex-col items-center gap-2 hover:bg-gray-50 transition">
-                        <i class="fa-solid fa-mobile-screen text-xl text-gray-600"></i>
-                        <span class="text-xs font-medium">スマホ</span>
-                    </button>
-                </div>
+                <h3 class="text-sm font-bold uppercase mb-3 tracking-wider">2. 表示設定</h3>
                 <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                     <input type="checkbox" id="checkbox-no-frame" onchange="toggleFrame()" class="w-4 h-4 text-tunag-blue border-gray-300 rounded focus:ring-tunag-blue">
                     <label for="checkbox-no-frame" class="text-sm text-gray-700 cursor-pointer">枠を表示しない</label>
@@ -258,8 +256,6 @@
             <!-- PC Frame -->
             <img id="frame-pc" src="device/pc-mockup.png" class="layer-frame absolute inset-0 pointer-events-none w-full h-full object-contain" alt="PC Frame">
 
-            <!-- Mobile Frame -->
-            <img id="frame-mobile" src="device/sp-mockup.png" class="layer-frame absolute inset-0 pointer-events-none w-full h-full object-contain hidden" alt="Mobile Frame">
 
             <!-- LAYER 2: SCREEN AREA (z-10) - モックアップ画像の画面部分に配置されるdiv -->
             <div id="screen-area" class="absolute overflow-hidden bg-white">
@@ -300,34 +296,25 @@
     <script>
         // --- Configuration & State ---
         const config = {
-            pc: { width: 800, height: 600, aspectRatio: 800/600 },
-            mobile: { width: 375, height: 812, aspectRatio: 375/812 }, 
-            none: { width: 800, height: 600, aspectRatio: NaN }
+            width: 800,
+            height: 600,
+            aspectRatio: 800/600
         };
         
-        // モックアップ画像の画面部分の位置とサイズ（px指定またはモックアップ画像サイズに対する比率）
-        // モックアップ画像の実際の画面部分のサイズに合わせて調整
+        // モックアップ画像の画面部分の位置とサイズ（px指定）
         const screenAreaConfig = {
-            pc: {
                 leftPx: 53.5,        // 左からの位置（px固定）
                 topPx: 5,           // 上からの位置（px固定）
                 widthPx: 492,       // 幅（px固定）
                 heightPx: 349.4     // 高さ（px固定）
-            },
-            mobile: {
-                leftPercent: 12,      // 左からの位置（%）
-                topPercent: 10,       // 上からの位置（%）
-                widthPercent: 76,     // 幅（%）
-                heightPercent: 55     // 高さ（%）- モックアップ画像の高さに合わせて調整
-            }
         };
 
         let state = {
-            device: 'pc',
             mode: 'preset', // デフォルトを「既存の画面から選ぶ」に変更
             cropper: null,
             lastPreset: 'timeline',
             lastBuilder: 'timeline',
+            lastTest: 'test_timeline',
             showFrame: true  // 枠を表示するかどうか
         };
 
@@ -335,10 +322,7 @@
         let els = {};
         
         // 画像のサイズを保持
-        let frameImageSizes = {
-            pc: { width: 0, height: 0 },
-            mobile: { width: 0, height: 0 }
-        };
+        let frameImageSize = { width: 0, height: 0 };
 
         // --- Initialization ---
         window.onload = () => {
@@ -346,7 +330,6 @@
             els = {
             wrapper: document.getElementById('capture-wrapper'),
             framePc: document.getElementById('frame-pc'),
-            frameMobile: document.getElementById('frame-mobile'),
             screenArea: document.getElementById('screen-area'),
             contentPlaceholder: document.getElementById('content-placeholder'),
             contentImg: document.getElementById('content-img'),
@@ -363,145 +346,53 @@
             }
             
             // 画像の読み込みを待つ
-            loadFrameImages();
-            
-            // ウインドウリサイズ時の処理
-            window.addEventListener('resize', () => {
-                if (state.device === 'mobile') {
-                    updateSizeAndFrame();
-                }
-            });
+            loadFrameImage();
         };
         
         // 画像を読み込んでサイズを取得
-        function loadFrameImages() {
+        function loadFrameImage() {
             const pcImg = new Image();
-            const mobileImg = new Image();
-            
-            let loadedCount = 0;
-            const totalImages = 2;
-            
-            const checkAllLoaded = () => {
-                loadedCount++;
-                if (loadedCount === totalImages) {
-            setDevice('pc');
-                    // デフォルトでpresetタブを表示
-                    switchTab('preset');
-                }
-            };
             
             pcImg.onload = () => {
-                frameImageSizes.pc = { width: pcImg.naturalWidth, height: pcImg.naturalHeight };
-                checkAllLoaded();
+                frameImageSize = { width: pcImg.naturalWidth, height: pcImg.naturalHeight };
+                updateSizeAndFrame();
+                    // デフォルトでpresetタブを表示
+                    switchTab('preset');
             };
             pcImg.onerror = () => {
                 console.error('PC画像の読み込みに失敗しました');
                 // デフォルトサイズを使用
-                frameImageSizes.pc = { width: 800, height: 600 };
-                checkAllLoaded();
+                frameImageSize = { width: 800, height: 600 };
+                updateSizeAndFrame();
+                // デフォルトでpresetタブを表示
+                switchTab('preset');
             };
             pcImg.src = 'device/pc-mockup.png';
-            
-            mobileImg.onload = () => {
-                frameImageSizes.mobile = { width: mobileImg.naturalWidth, height: mobileImg.naturalHeight };
-                checkAllLoaded();
-            };
-            mobileImg.onerror = () => {
-                console.error('Mobile画像の読み込みに失敗しました');
-                // デフォルトサイズを使用
-                frameImageSizes.mobile = { width: 375, height: 812 };
-                checkAllLoaded();
-            };
-            mobileImg.src = 'device/sp-mockup.png';
-        }
-
-        // --- Device Handling ---
-        function setDevice(type) {
-            if (!els.wrapper) return; // DOM要素が初期化されていない場合は終了
-            
-            state.device = type;
-            
-            // UI Button Active State
-            document.querySelectorAll('.dev-btn').forEach(btn => {
-                btn.classList.remove('ring-2', 'ring-tunag-blue', 'bg-blue-50');
-            });
-            const btnEl = document.getElementById(`btn-dev-${type}`);
-            if (btnEl) {
-                btnEl.classList.add('ring-2', 'ring-tunag-blue', 'bg-blue-50');
-            }
-
-            // サイズと枠の表示を更新
-            updateSizeAndFrame();
-            
-            // コンテンツの再読み込み
-            if(state.mode === 'preset') {
-                // 画像プリセットの場合は再読み込み
-                const imagePresets = ['timeline', 'thankscard', 'company_notice', 'monthly_award', 'president_message', 'post_company_notice', 'post_president_message'];
-                if (imagePresets.includes(state.lastPreset)) {
-                    applyPreset(state.lastPreset);
-                }
-            } else if(state.mode === 'upload' && els.contentImg && els.contentImg.src) {
-                // アップロード画像がある場合はサイズを再調整
-                setTimeout(() => updateImageSize(), 100);
-            }
         }
         
         // サイズと枠の表示を更新
         function updateSizeAndFrame() {
             if (!els.wrapper) return;
             
-            const type = state.device;
-            const imageSize = frameImageSizes[type];
+            const imageSize = frameImageSize;
             
-            let targetWidth, targetHeight;
-            
-            // PCの場合は幅を600pxに固定
-            if (type === 'pc') {
-                targetWidth = 600;
+            // 幅を600pxに固定
+            const targetWidth = 600;
                 // 高さはアスペクト比を維持して計算
+            let targetHeight;
                 if (imageSize.width > 0 && imageSize.height > 0) {
                     const aspectRatio = imageSize.height / imageSize.width;
                     targetHeight = targetWidth * aspectRatio;
                 } else {
                     // デフォルトサイズを使用
-            const dims = config[type];
-                    const aspectRatio = dims.height / dims.width;
+                const aspectRatio = config.height / config.width;
                     targetHeight = targetWidth * aspectRatio;
                 }
-            } else {
-                // スマホの場合
-                if (imageSize.width > 0 && imageSize.height > 0) {
-                    // 画像のサイズを使用
-                    targetWidth = imageSize.width;
-                    targetHeight = imageSize.height;
-                } else {
-                    // デフォルトサイズを使用
-                    const dims = config[type];
-                    targetWidth = dims.width;
-                    targetHeight = dims.height;
-                }
-                
-                // スマホの場合、ウインドウ縦幅の85%を上限とする（アスペクト比を維持）
-                const maxHeight = window.innerHeight * 0.85;
-                if (targetHeight > maxHeight) {
-                    const scale = maxHeight / targetHeight;
-                    targetWidth = targetWidth * scale;
-                    targetHeight = maxHeight;
-                }
-            }
             
-            // サイズを設定
-            if (type === 'pc') {
-                // PCの場合は600pxに固定して中央配置
+            // サイズを設定（600pxに固定して中央配置）
                 els.wrapper.style.width = `${targetWidth}px`;
                 els.wrapper.style.height = `${targetHeight}px`;
                 els.wrapper.style.margin = '0 auto';
-            } else {
-                // スマホの場合は100%
-                els.wrapper.style.width = '100%';
-                els.wrapper.style.height = '100%';
-                els.wrapper.style.margin = '0';
-            }
             els.wrapper.style.borderRadius = '0';
             
             // 枠の表示/非表示
@@ -518,29 +409,18 @@
         function updateScreenArea() {
             if (!els.screenArea || !els.wrapper) return;
             
-            const type = state.device;
-            const config = screenAreaConfig[type];
-            
-            if (!config) return;
-            
             const wrapperWidth = els.wrapper.offsetWidth || els.wrapper.clientWidth;
             const wrapperHeight = els.wrapper.offsetHeight || els.wrapper.clientHeight;
             
             if (wrapperWidth > 0 && wrapperHeight > 0) {
-                // leftはpx指定がある場合はそれを使用、なければパーセンテージから計算
-                const left = config.leftPx !== undefined ? config.leftPx : (wrapperWidth * config.leftPercent) / 100;
-                // topはpx指定がある場合はそれを使用、なければパーセンテージから計算
-                const top = config.topPx !== undefined ? config.topPx : (wrapperHeight * config.topPercent) / 100;
-                // widthはpx指定がある場合はそれを使用、なければパーセンテージから計算
-                const width = config.widthPx !== undefined ? config.widthPx : (wrapperWidth * config.widthPercent) / 100;
-                // heightはpx指定がある場合はそれを使用、なければパーセンテージから計算
-                const height = config.heightPx !== undefined ? config.heightPx : (wrapperHeight * config.heightPercent) / 100;
+                // スケールを計算（600px基準）
+                const scale = wrapperWidth / 600;
                 
-                // screen-areaの位置とサイズを設定
-                els.screenArea.style.left = `${left}px`;
-                els.screenArea.style.top = `${top}px`;
-                els.screenArea.style.width = `${width}px`;
-                els.screenArea.style.height = `${height}px`;
+                // screen-areaの位置とサイズを設定（スケール適用）
+                els.screenArea.style.left = `${screenAreaConfig.leftPx * scale}px`;
+                els.screenArea.style.top = `${screenAreaConfig.topPx * scale}px`;
+                els.screenArea.style.width = `${screenAreaConfig.widthPx * scale}px`;
+                els.screenArea.style.height = `${screenAreaConfig.heightPx * scale}px`;
             }
         }
         
@@ -561,10 +441,8 @@
         
         // 枠の表示/非表示を更新
         function updateFrameVisibility() {
-            const type = state.device;
             const showFrame = state.showFrame;
             
-            if (type === 'pc') {
                 if (els.framePc) {
                     if (showFrame) {
                         els.framePc.style.display = 'block';
@@ -572,25 +450,6 @@
                     } else {
                         els.framePc.style.display = 'none';
                         els.framePc.classList.add('hidden');
-                    }
-                }
-                if (els.frameMobile) {
-                    els.frameMobile.style.display = 'none';
-                els.frameMobile.classList.add('hidden');
-                }
-            } else if (type === 'mobile') {
-                if (els.framePc) {
-                    els.framePc.style.display = 'none';
-                els.framePc.classList.add('hidden');
-                }
-                if (els.frameMobile) {
-                    if (showFrame) {
-                        els.frameMobile.style.display = 'block';
-                els.frameMobile.classList.remove('hidden');
-            } else {
-                        els.frameMobile.style.display = 'none';
-                els.frameMobile.classList.add('hidden');
-                    }
                 }
             }
         }
@@ -611,7 +470,7 @@
             state.mode = mode;
             
             // Reset Tabs
-            const tabs = ['upload', 'preset', 'builder'];
+            const tabs = ['upload', 'preset', 'builder', 'test'];
             tabs.forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 const contentEl = document.getElementById(`content-${t}`);
@@ -654,6 +513,13 @@
                 if (els.contentPlaceholder) els.contentPlaceholder.classList.add('hidden');
                 if (els.contentHtml) els.contentHtml.classList.remove('hidden');
                 applyBuilder(state.lastBuilder);
+            } else if (mode === 'test') {
+                if (els.contentImg) els.contentImg.classList.add('hidden');
+                if (els.contentPlaceholder) els.contentPlaceholder.classList.add('hidden');
+                if (els.contentHtml) els.contentHtml.classList.remove('hidden');
+                if (state.lastTest) {
+                    applyTest(state.lastTest);
+                }
             }
         }
 
@@ -678,7 +544,7 @@
             els.modal.classList.remove('hidden');
             if (state.cropper) state.cropper.destroy();
             const image = els.cropperImg;
-            const ar = config[state.device].aspectRatio;
+            const ar = config.aspectRatio;
             state.cropper = new Cropper(image, { aspectRatio: ar || NaN, viewMode: 1, autoCropArea: 1, background: false });
         }
 
@@ -694,10 +560,9 @@
         function applyCrop() {
             if (!state.cropper || !els.contentImg || !els.contentPlaceholder) return;
             
-            // デバイスに応じたサイズで切り抜き
-            const deviceConfig = config[state.device];
-            const cropWidth = deviceConfig.width * 2;
-            const cropHeight = deviceConfig.height * 2;
+            // PCサイズで切り抜き
+            const cropWidth = config.width * 2;
+            const cropHeight = config.height * 2;
             
             const canvas = state.cropper.getCroppedCanvas({ 
                 width: cropWidth, 
@@ -722,6 +587,66 @@
         // --- Content Generation Helpers ---
         const baseClass = "w-full h-full bg-gray-50 font-sans text-gray-800 overflow-hidden flex flex-col";
         
+        // --- Common Components ---
+        // PC_header: 共通ヘッダーコンポーネント
+        function createPCHeader() {
+            return `
+                <div class="bg-[#00aac2] w-full flex items-center justify-between px-8 py-4">
+                    <!-- TUNAGロゴ -->
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-white rounded flex items-center justify-center">
+                            <span class="text-[#00aac2] font-bold text-xs">T</span>
+                        </div>
+                        <span class="text-white font-bold text-lg" contenteditable="true">TUNAG</span>
+                    </div>
+                    
+                    <!-- ナビゲーションメニュー -->
+                    <div class="flex items-center gap-8">
+                        <div class="flex items-center gap-2 text-white hover:opacity-80 cursor-pointer">
+                            <i class="fa-solid fa-list-ul text-sm"></i>
+                            <span class="font-semibold text-base" contenteditable="true">タイムライン</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-white hover:opacity-80 cursor-pointer">
+                            <i class="fa-regular fa-comment-dots text-sm"></i>
+                            <span class="font-semibold text-base" contenteditable="true">チャット</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-white hover:opacity-80 cursor-pointer">
+                            <i class="fa-solid fa-gift text-sm"></i>
+                            <span class="font-semibold text-base" contenteditable="true">制度</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-white hover:opacity-80 cursor-pointer">
+                            <i class="fa-solid fa-users text-sm"></i>
+                            <span class="font-semibold text-base" contenteditable="true">組織</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-white hover:opacity-80 cursor-pointer">
+                            <i class="fa-solid fa-table-columns text-sm"></i>
+                            <span class="font-semibold text-base" contenteditable="true">ポータル</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-white hover:opacity-80 cursor-pointer">
+                            <i class="fa-solid fa-bell text-sm"></i>
+                            <span class="font-semibold text-base" contenteditable="true">お知らせ</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 右側メニュー -->
+                    <div class="flex items-center gap-4">
+                        <!-- 検索アイコン -->
+                        <div class="text-white hover:opacity-80 cursor-pointer">
+                            <i class="fa-solid fa-search text-lg"></i>
+                        </div>
+                        
+                        <!-- プロフィール -->
+                        <div class="flex items-center gap-2 cursor-pointer">
+                            <div class="w-8 h-8 rounded-full bg-cyan-200 flex items-center justify-center">
+                                <i class="fa-solid fa-user text-cyan-600 text-xs"></i>
+                            </div>
+                            <i class="fa-solid fa-chevron-down text-white text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
         // --- 1. Preset Logic (Rich Dummy Data) ---
         function applyPreset(type) {
             state.lastPreset = type;
@@ -743,42 +668,19 @@
 
             // 画像プリセットのマッピング
             const imagePresets = {
-                'timeline': {
-                    pc: 'preset/timeline_001_pc.png',
-                    mobile: 'preset/timeline_001_sp.png'
-                },
-                'thankscard': {
-                    pc: 'preset/制度詳細_PC_サンクスカード.png',
-                    mobile: 'preset/制度詳細_SP_サンクスカード.png'
-                },
-                'company_notice': {
-                    pc: 'preset/制度詳細_PC_会社からのお知らせ.png',
-                    mobile: 'preset/制度詳細_SP_会社からのお知らせ.png'
-                },
-                'monthly_award': {
-                    pc: 'preset/制度詳細_PC_月間表彰.png',
-                    mobile: 'preset/制度詳細_SP_月間表彰.png'
-                },
-                'president_message': {
-                    pc: 'preset/制度詳細_PC_社長メッセージ.png',
-                    mobile: 'preset/制度詳細_SP_社長メッセージ.png'
-                },
-                'post_company_notice': {
-                    pc: 'preset/投稿詳細_PC_会社からのお知らせ.png',
-                    mobile: 'preset/投稿詳細_SP_会社からのお知らせ.png'
-                },
-                'post_president_message': {
-                    pc: 'preset/投稿詳細_PC_社長メッセージ.png',
-                    mobile: 'preset/投稿詳細_SP_社長メッセージ.png'
-                }
+                'timeline': 'preset/timeline_001_pc.png',
+                'thankscard': 'preset/制度詳細_PC_サンクスカード.png',
+                'company_notice': 'preset/制度詳細_PC_会社からのお知らせ.png',
+                'monthly_award': 'preset/制度詳細_PC_月間表彰.png',
+                'president_message': 'preset/制度詳細_PC_社長メッセージ.png',
+                'post_company_notice': 'preset/投稿詳細_PC_会社からのお知らせ.png',
+                'post_president_message': 'preset/投稿詳細_PC_社長メッセージ.png'
             };
             
             // 画像プリセットの場合は画像を読み込む
             if (imagePresets[type]) {
-                // デバイスに応じて画像を選択
-                const imagePath = state.device === 'pc' 
-                    ? imagePresets[type].pc 
-                    : imagePresets[type].mobile;
+                // PC画像を使用
+                const imagePath = imagePresets[type];
                 
                 // 画像を表示
                 if (els.contentImg) {
@@ -807,6 +709,295 @@
             let html = '';
             
             if (type === 'chat') {
+                html = `
+                    <div class="${baseClass}">
+                        <!-- PC_header: 共通ヘッダーコンポーネント -->
+                        ${createPCHeader()}
+                        <div class="flex-1 overflow-y-auto bg-gray-50 flex">
+                            <!-- 左サイドバー -->
+                            <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
+                                <!-- PC_profile: プロフィールカード -->
+                                <div class="bg-white rounded-lg m-4 mb-3 overflow-hidden shadow-sm">
+                                    <div class="h-48 bg-gradient-to-br from-blue-400 to-purple-400 relative">
+                                        <div class="absolute bottom-0 left-4 transform translate-y-1/2">
+                                            <div class="w-20 h-20 rounded-full bg-cyan-200 border-4 border-white flex items-center justify-center">
+                                                <i class="fa-solid fa-user text-cyan-600 text-2xl"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="pt-10 pb-4 px-4">
+                                        <div class="font-bold text-gray-700 text-lg mb-1" contenteditable="true">佐藤 陽菜</div>
+                                        <div class="text-gray-500 text-sm" contenteditable="true">株式会社スタメン／人事部</div>
+                                        <div class="text-gray-500 text-sm" contenteditable="true">採用グループ</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- PC_point: ポイント表示 -->
+                                <div class="bg-white rounded-lg mx-4 mb-3 p-4 shadow-sm">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-gray-700 font-medium" contenteditable="true">現在のポイント</div>
+                                        <div class="text-tunag-cyan font-bold text-2xl" contenteditable="true">125 <span class="text-lg">pt⭐</span></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- PC_pickup: ピックアップアイテム -->
+                                <div class="flex-1 overflow-y-auto px-4 space-y-3">
+                                    <div class="flex items-center gap-4 p-3 bg-white rounded-lg shadow-sm">
+                                        <div class="w-20 h-20 rounded-xl bg-gradient-to-br from-green-400 to-teal-400 flex items-center justify-center shrink-0">
+                                            <i class="fa-solid fa-tasks text-white text-xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-700" contenteditable="true">タスク</div>
+                                    </div>
+                                    <div class="flex items-center gap-4 p-3 bg-white rounded-lg shadow-sm">
+                                        <div class="w-20 h-20 rounded-xl bg-gradient-to-br from-pink-400 to-red-400 flex items-center justify-center shrink-0">
+                                            <i class="fa-solid fa-star text-white text-xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-700" contenteditable="true">注目の投稿</div>
+                                    </div>
+                                    <div class="flex items-center gap-4 p-3 bg-white rounded-lg shadow-sm">
+                                        <div class="w-20 h-20 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center shrink-0">
+                                            <i class="fa-solid fa-bookmark text-white text-xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-700" contenteditable="true">ブックマーク</div>
+                                    </div>
+                                    <div class="flex items-center gap-4 p-3 bg-white rounded-lg shadow-sm">
+                                        <div class="w-20 h-20 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-400 flex items-center justify-center shrink-0">
+                                            <i class="fa-solid fa-envelope text-white text-xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-700" contenteditable="true">未読の投稿</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- メインコンテンツエリア -->
+                            <div class="flex-1 overflow-y-auto">
+                                <!-- ユーザー情報 -->
+                                <div class="bg-white flex items-center gap-3 px-6 pt-6 pb-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-user text-red-500 text-xs"></i>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <div class="font-bold text-gray-700 text-lg" contenteditable="true">鈴木 一秀</div>
+                                        <div class="text-gray-400 text-sm" contenteditable="true">1月13日 9:21</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 注意メッセージ -->
+                                <div class="bg-white px-6 py-4 border-b border-gray-100">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-cyan-500 font-medium text-lg" contenteditable="true">社長メッセージ</span>
+                                        <span class="text-gray-700 font-normal text-lg" contenteditable="true">を公開しました！</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- テキストコンテンツ -->
+                                <div class="bg-white px-6 py-4 border-b border-gray-100">
+                                    <div class="space-y-3 text-gray-700">
+                                        <p class="text-base leading-relaxed" contenteditable="true">皆さん、おはようございます。</p>
+                                        <p class="text-base leading-relaxed" contenteditable="true">本日は、私が大切にしている「らしく働く」というテーマについて、お話しさせていただきます。</p>
+                                        <p class="text-base leading-relaxed" contenteditable="true">私たちは、一人ひとりが持つ個性や強みを活かしながら、チームとして成果を出していくことが重要だと考えています。</p>
+                                        <p class="text-base leading-relaxed" contenteditable="true">それぞれの「らしさ」を尊重し、お互いを理解し合うことで、より良い職場環境が生まれます。</p>
+                                        <p class="text-base leading-relaxed mt-4" contenteditable="true">今年も、皆さん一人ひとりが「らしく働く」ことができるよう、全力でサポートしていきます。一緒に頑張りましょう！</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- メンバー情報 -->
+                                <div class="bg-white px-6 py-4 border-b border-gray-100">
+                                    <div class="space-y-4">
+                                        <!-- メンバーカード1 -->
+                                        <div class="border border-gray-200 rounded-lg p-4">
+                                            <div class="flex items-center gap-6">
+                                                <div class="w-18 h-18 rounded-full bg-yellow-100 flex items-center justify-center shrink-0">
+                                                    <i class="fa-solid fa-user text-yellow-600"></i>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <div class="font-bold text-gray-700 text-lg" contenteditable="true">田中 優助</div>
+                                                    <div class="text-gray-500 text-sm" contenteditable="true">事業法人 第三部</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- メンバーカード2 -->
+                                        <div class="border border-gray-200 rounded-lg p-4">
+                                            <div class="flex items-center gap-6">
+                                                <div class="w-18 h-18 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                                                    <i class="fa-solid fa-user text-green-600"></i>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <div class="font-bold text-gray-700 text-lg" contenteditable="true">吉川 美紗子</div>
+                                                    <div class="text-gray-500 text-sm" contenteditable="true">インサイドセールス部</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 写真 -->
+                                <div class="bg-white px-6 py-6 border-b border-gray-100">
+                                    <div class="w-full h-96 bg-gray-200 rounded-xl flex items-center justify-center">
+                                        <i class="fa-solid fa-image text-gray-400 text-4xl"></i>
+                                    </div>
+                                </div>
+                                
+                                <!-- カテゴリ -->
+                                <div class="bg-white px-6 py-5 border-b border-gray-100 flex items-center gap-6">
+                                    <div class="w-23 h-23 rounded-2xl bg-yellow-400 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-bullhorn text-white text-sm"></i>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <div class="font-bold text-gray-700 text-lg mb-1" contenteditable="true">社長メッセージ</div>
+                                        <div class="text-gray-600 text-base" contenteditable="true">鈴木社長が事業や会社への思いを伝えます🔥</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- リアクション -->
+                                <div class="bg-white px-6 py-1 border-b border-gray-100 flex items-center justify-between">
+                                    <div class="flex items-center gap-4">
+                                        <!-- リアクションボタン -->
+                                        <div class="flex items-center gap-2">
+                                            <div class="border-2 border-cyan-500 rounded-full px-3 py-2 flex items-center">
+                                                <i class="fa-regular fa-heart text-cyan-500 text-sm"></i>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                                    <i class="fa-regular fa-face-smile text-gray-500 text-xs"></i>
+                                                </div>
+                                                <span class="text-gray-700 font-bold text-lg">1</span>
+                                            </div>
+                                            <div class="bg-gray-100 rounded-full px-3 py-2">
+                                                <i class="fa-regular fa-comment text-gray-500 text-sm"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <!-- 既読ユーザー -->
+                                        <div class="flex -space-x-2">
+                                            <div class="w-8 h-8 rounded-full bg-red-500 border-2 border-white"></div>
+                                            <div class="w-8 h-8 rounded-full bg-pink-400 border-2 border-white"></div>
+                                            <div class="w-8 h-8 rounded-full bg-green-500 border-2 border-white"></div>
+                                            <div class="w-8 h-8 rounded-full bg-orange-400 border-2 border-white"></div>
+                                            <div class="w-8 h-8 rounded-full bg-blue-400 border-2 border-white"></div>
+                                        </div>
+                                        <span class="text-cyan-500 text-sm" contenteditable="true">既読 <span class="font-bold">31</span>人</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- コメント -->
+                                <div class="bg-white">
+                                    <!-- コメント1 -->
+                                    <div class="px-6 py-6 border-b border-gray-100">
+                                        <div class="flex items-start gap-4">
+                                            <div class="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-1">
+                                                <i class="fa-solid fa-user text-green-600 text-xs"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-end gap-5 mb-1">
+                                                    <div class="font-medium text-gray-700 text-base" contenteditable="true">吉川 美紗子</div>
+                                                    <div class="text-gray-400 text-sm" contenteditable="true">1月13日 10:01</div>
+                                                </div>
+                                                <div class="text-gray-700 text-lg leading-relaxed" contenteditable="true">"らしく働く"って、抽象的だけど奥深い言葉ですね。<br>チームとしてどう在れるか、考えてみたくなりました！</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- コメント2 -->
+                                    <div class="px-6 py-6 border-b border-gray-100">
+                                        <div class="flex items-start gap-4">
+                                            <div class="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-1">
+                                                <i class="fa-solid fa-user text-blue-600 text-xs"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-end gap-5 mb-1">
+                                                    <div class="font-medium text-gray-700 text-base" contenteditable="true">山田 太郎</div>
+                                                    <div class="text-gray-400 text-sm" contenteditable="true">1月13日 10:15</div>
+                                                </div>
+                                                <div class="text-gray-700 text-lg leading-relaxed" contenteditable="true">社長のメッセージ、とても共感しました。自分らしさを大切にしながら、チームの一員として貢献していきたいです。</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- コメント3 -->
+                                    <div class="px-6 py-6">
+                                        <div class="flex items-start gap-4">
+                                            <div class="w-4 h-4 rounded-full bg-purple-100 flex items-center justify-center shrink-0 mt-1">
+                                                <i class="fa-solid fa-user text-purple-600 text-xs"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-end gap-5 mb-1">
+                                                    <div class="font-medium text-gray-700 text-base" contenteditable="true">佐藤 花子</div>
+                                                    <div class="text-gray-400 text-sm" contenteditable="true">1月13日 10:30</div>
+                                                </div>
+                                                <div class="text-gray-700 text-lg leading-relaxed" contenteditable="true">今年もよろしくお願いします！一人ひとりの個性を活かせる職場環境を、みんなで作っていきましょう。</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 右サイドバー -->
+                            <div class="w-80 bg-white border-l border-gray-200 flex flex-col">
+                                <!-- PC_mustread: 必読投稿 -->
+                                <div class="m-4 mb-3 bg-white rounded-lg overflow-hidden shadow-sm">
+                                    <div class="bg-white px-4 py-3 flex items-center justify-between border-b border-gray-200">
+                                        <div class="font-bold text-gray-700" contenteditable="true">必読投稿</div>
+                                        <div class="flex items-center gap-1 text-gray-600 text-sm cursor-pointer">
+                                            <span contenteditable="true">すべて見る</span>
+                                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                                        </div>
+                                    </div>
+                                    <div class="h-64 bg-orange-400 relative overflow-hidden">
+                                        <div class="absolute inset-0 bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+                                            <i class="fa-solid fa-image text-white text-6xl opacity-50"></i>
+                                        </div>
+                                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 px-4 py-3">
+                                            <div class="text-white font-bold text-center" contenteditable="true">今週のベスト投稿</div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white px-4 py-3 flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="bg-red-500 text-white text-xs px-2 py-1 rounded" contenteditable="true">UPDATE</span>
+                                            <span class="text-gray-600 text-sm" contenteditable="true">4月28日</span>
+                                        </div>
+                                        <div class="text-cyan-600 font-bold text-sm cursor-pointer" contenteditable="true">確認する <i class="fa-solid fa-chevron-right text-xs"></i></div>
+                                    </div>
+                                    <div class="flex justify-center gap-2 pb-3">
+                                        <div class="w-2 h-2 rounded-full bg-cyan-500"></div>
+                                        <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                                        <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- PC_menu: メニュー -->
+                                <div class="mx-4 mb-3 bg-white rounded-lg p-4 shadow-sm">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-12 rounded bg-blue-500 flex items-center justify-center shrink-0">
+                                            <i class="fa-solid fa-envelope text-white"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-700" contenteditable="true">メール</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- PC_notice: お知らせ -->
+                                <div class="flex-1 overflow-y-auto px-4 space-y-3">
+                                    <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                                        <div class="font-bold text-sm text-gray-700 mb-1" contenteditable="true">お知らせタイトル1</div>
+                                        <div class="text-xs text-gray-500" contenteditable="true">お知らせの内容がここに表示されます...</div>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                                        <div class="font-bold text-sm text-gray-700 mb-1" contenteditable="true">お知らせタイトル2</div>
+                                        <div class="text-xs text-gray-500" contenteditable="true">お知らせの内容がここに表示されます...</div>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                                        <div class="font-bold text-sm text-gray-700 mb-1" contenteditable="true">お知らせタイトル3</div>
+                                        <div class="text-xs text-gray-500" contenteditable="true">お知らせの内容がここに表示されます...</div>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                                        <div class="font-bold text-sm text-gray-700 mb-1" contenteditable="true">お知らせタイトル4</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (type === 'chat') {
                 html = `
                      <div class="${baseClass}">
                         <div class="h-14 bg-white border-b flex items-center px-4 gap-3 shrink-0">
@@ -940,6 +1131,350 @@
             }
         }
 
+        // --- Test Logic ---
+        function applyTest(type) {
+            state.lastTest = type;
+            
+            // Update UI Button Styles
+            document.querySelectorAll('#content-test .btn-select').forEach(btn => {
+                const onclickAttr = btn.getAttribute('onclick') || '';
+                const match = onclickAttr.match(/applyTest\(['"]([^'"]+)['"]\)/);
+                const buttonType = match ? match[1] : '';
+                if(buttonType === type) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            let html = '';
+            
+            if (type === 'test_timeline') {
+                html = `
+                    <div class="${baseClass}">
+                        <!-- PC_header: 共通ヘッダーコンポーネント -->
+                        ${createPCHeader()}
+                        <div class="flex-1 overflow-y-auto bg-gray-50 flex">
+                            <!-- 左サイドバー -->
+                            <div class="w-96 bg-white border-r border-gray-200 flex flex-col shrink-0">
+                                <!-- PC_profile: プロフィールカード -->
+                                <div class="bg-white rounded-lg m-5 mb-4 overflow-hidden shadow-sm">
+                                    <div class="h-64 bg-gray-300 relative overflow-hidden">
+                                        <!-- 背景画像のプレースホルダー -->
+                                        <div class="absolute inset-0 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100"></div>
+                                        <div class="absolute inset-0 flex items-center justify-center opacity-20">
+                                            <i class="fa-solid fa-building text-gray-400 text-6xl"></i>
+                                        </div>
+                                        <!-- プロフィールアイコン -->
+                                        <div class="absolute bottom-0 left-5 transform translate-y-1/2">
+                                            <div class="w-24 h-24 rounded-full bg-cyan-200 border-4 border-white flex items-center justify-center shadow-md">
+                                                <i class="fa-solid fa-user text-cyan-600 text-3xl"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="pt-14 pb-5 px-5">
+                                        <div class="font-bold text-gray-700 text-xl mb-1" contenteditable="true">佐藤 陽菜</div>
+                                        <div class="text-gray-500 text-sm mb-0.5" contenteditable="true">株式会社スタメン／人事部</div>
+                                        <div class="text-gray-500 text-sm" contenteditable="true">採用グループ</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- PC_point: ポイント表示 -->
+                                <div class="bg-white rounded-lg mx-5 mb-4 p-5 shadow-sm">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-gray-700 font-medium text-base" contenteditable="true">現在のポイント</div>
+                                        <div class="text-tunag-cyan font-bold text-3xl" contenteditable="true">125 <span class="text-xl">pt⭐</span></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- PC_pickup: ピックアップアイテム -->
+                                <div class="flex-1 overflow-y-auto px-5 space-y-3 pb-5">
+                                    <div class="flex items-center gap-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                                        <div class="w-24 h-24 rounded-xl bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center shrink-0 shadow-sm">
+                                            <i class="fa-solid fa-list-check text-white text-2xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-700 text-base" contenteditable="true">タスク</div>
+                                    </div>
+                                    <div class="flex items-center gap-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                                        <div class="w-24 h-24 rounded-xl bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center shrink-0 shadow-sm">
+                                            <i class="fa-solid fa-book text-white text-2xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-700 text-base" contenteditable="true">必読の投稿</div>
+                                    </div>
+                                    <div class="flex items-center gap-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                                        <div class="w-24 h-24 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shrink-0 shadow-sm">
+                                            <i class="fa-solid fa-envelope-open text-white text-2xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-700 text-base" contenteditable="true">未読の投稿</div>
+                                    </div>
+                                    <div class="flex items-center gap-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                                        <div class="w-24 h-24 rounded-xl bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center shrink-0 shadow-sm">
+                                            <i class="fa-solid fa-user-tie text-white text-2xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-700 text-base" contenteditable="true">社長メッセージ</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- メインコンテンツエリア -->
+                            <div class="flex-1 overflow-y-auto min-w-0">
+                                <!-- ユーザー情報 -->
+                                <div class="bg-white flex items-center gap-4 px-8 pt-8 pb-4 border-b border-gray-100">
+                                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-user text-red-500"></i>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <div class="font-bold text-gray-700 text-xl" contenteditable="true">鈴木 一秀</div>
+                                        <div class="text-gray-400 text-sm" contenteditable="true">1月13日 9:21</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 注意メッセージ -->
+                                <div class="bg-white px-8 py-5 border-b border-gray-100">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-cyan-500 font-medium text-xl" contenteditable="true">社長メッセージ</span>
+                                        <span class="text-gray-700 font-normal text-xl" contenteditable="true">を公開しました！</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- タイトル -->
+                                <div class="bg-white px-8 py-5 border-b border-gray-100">
+                                    <div class="text-gray-500 text-sm mb-2" contenteditable="true">タイトル</div>
+                                    <div class="font-bold text-gray-800 text-2xl" contenteditable="true">"らしさ"を大事にできる組織へ</div>
+                                </div>
+                                
+                                <!-- テキストコンテンツ -->
+                                <div class="bg-white px-8 py-5 border-b border-gray-100">
+                                    <div class="text-gray-500 text-sm mb-3" contenteditable="true">内容</div>
+                                    <div class="space-y-4 text-gray-700">
+                                        <p class="text-base leading-relaxed" contenteditable="true">皆さん、おはようございます。</p>
+                                        <p class="text-base leading-relaxed" contenteditable="true">本日は、私が大切にしている「らしく働く」というテーマについて、お話しさせていただきます。</p>
+                                        <p class="text-base leading-relaxed" contenteditable="true">私たちは、一人ひとりが持つ個性や強みを活かしながら、チームとして成果を出していくことが重要だと考えています。</p>
+                                        <p class="text-base leading-relaxed" contenteditable="true">それぞれの「らしさ」を尊重し、お互いを理解し合うことで、より良い職場環境が生まれます。</p>
+                                        <p class="text-base leading-relaxed" contenteditable="true">今年も、皆さん一人ひとりが「らしく働く」ことができるよう、全力でサポートしていきます。一緒に頑張りましょう！</p>
+                                    </div>
+                                    <div class="mt-4">
+                                        <span class="text-cyan-500 text-sm cursor-pointer hover:underline" contenteditable="true">もっと見る</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- 関連するメンバー -->
+                                <div class="bg-white px-8 py-5 border-b border-gray-100">
+                                    <div class="text-gray-500 text-sm mb-4" contenteditable="true">関連するメンバー</div>
+                                    <div class="space-y-3">
+                                        <!-- メンバーカード1 -->
+                                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                                            <div class="flex items-center gap-5">
+                                                <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center shrink-0">
+                                                    <i class="fa-solid fa-user text-yellow-600 text-xl"></i>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <div class="font-bold text-gray-700 text-lg" contenteditable="true">田中 優助</div>
+                                                    <div class="text-gray-500 text-sm" contenteditable="true">事業法人 第三部</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- メンバーカード2 -->
+                                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                                            <div class="flex items-center gap-5">
+                                                <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                                                    <i class="fa-solid fa-user text-green-600 text-xl"></i>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <div class="font-bold text-gray-700 text-lg" contenteditable="true">吉川 美紗子</div>
+                                                    <div class="text-gray-500 text-sm" contenteditable="true">インサイドセールス部</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 写真 -->
+                                <div class="bg-white px-8 py-6 border-b border-gray-100">
+                                    <div class="w-full h-96 bg-gray-200 rounded-xl flex items-center justify-center overflow-hidden">
+                                        <div class="relative w-full h-full bg-gradient-to-br from-blue-100 to-purple-100">
+                                            <div class="absolute inset-0 flex items-center justify-center">
+                                                <div class="text-center">
+                                                    <i class="fa-solid fa-users text-gray-400 text-6xl mb-4"></i>
+                                                    <div class="text-gray-500 text-sm">画像プレースホルダー</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- カテゴリ -->
+                                <div class="bg-white px-8 py-5 border-b border-gray-100 flex items-center gap-6">
+                                    <div class="w-20 h-20 rounded-2xl bg-yellow-400 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-bullhorn text-white text-lg"></i>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <div class="font-bold text-gray-700 text-lg mb-1" contenteditable="true">社長メッセージ</div>
+                                        <div class="text-gray-600 text-base" contenteditable="true">鈴木社長が事業や会社への思いを伝えます🔥</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- リアクション -->
+                                <div class="bg-white px-8 py-2 border-b border-gray-100 flex items-center justify-between">
+                                    <div class="flex items-center gap-4">
+                                        <!-- リアクションボタン -->
+                                        <div class="flex items-center gap-2">
+                                            <div class="border-2 border-cyan-500 rounded-full px-3 py-2 flex items-center">
+                                                <i class="fa-regular fa-heart text-cyan-500 text-sm"></i>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                                    <i class="fa-regular fa-face-smile text-gray-500 text-xs"></i>
+                                                </div>
+                                                <span class="text-gray-700 font-bold text-lg">1</span>
+                                            </div>
+                                            <div class="bg-gray-100 rounded-full px-3 py-2">
+                                                <i class="fa-regular fa-comment text-gray-500 text-sm"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <!-- 既読ユーザー -->
+                                        <div class="flex -space-x-2">
+                                            <div class="w-8 h-8 rounded-full bg-red-500 border-2 border-white"></div>
+                                            <div class="w-8 h-8 rounded-full bg-pink-400 border-2 border-white"></div>
+                                            <div class="w-8 h-8 rounded-full bg-green-500 border-2 border-white"></div>
+                                            <div class="w-8 h-8 rounded-full bg-orange-400 border-2 border-white"></div>
+                                            <div class="w-8 h-8 rounded-full bg-blue-400 border-2 border-white"></div>
+                                        </div>
+                                        <span class="text-cyan-500 text-sm" contenteditable="true">既読 <span class="font-bold">31</span>人</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- コメント -->
+                                <div class="bg-white">
+                                    <!-- コメント1 -->
+                                    <div class="px-8 py-6 border-b border-gray-100">
+                                        <div class="flex items-start gap-4">
+                                            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                                                <i class="fa-solid fa-user text-green-600"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-end gap-5 mb-1">
+                                                    <div class="font-medium text-gray-700 text-base" contenteditable="true">吉川 美紗子</div>
+                                                    <div class="text-gray-400 text-sm" contenteditable="true">1月13日 10:01</div>
+                                                </div>
+                                                <div class="text-gray-700 text-lg leading-relaxed" contenteditable="true">"らしく働く"って、抽象的だけど奥深い言葉ですね。<br>チームとしてどう在れるか、考えてみたくなりました！</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- コメント2 -->
+                                    <div class="px-8 py-6 border-b border-gray-100">
+                                        <div class="flex items-start gap-4">
+                                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                                                <i class="fa-solid fa-user text-blue-600"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-end gap-5 mb-1">
+                                                    <div class="font-medium text-gray-700 text-base" contenteditable="true">山田 太郎</div>
+                                                    <div class="text-gray-400 text-sm" contenteditable="true">1月13日 10:15</div>
+                                                </div>
+                                                <div class="text-gray-700 text-lg leading-relaxed" contenteditable="true">社長のメッセージ、とても共感しました。自分らしさを大切にしながら、チームの一員として貢献していきたいです。</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- コメント3 -->
+                                    <div class="px-8 py-6">
+                                        <div class="flex items-start gap-4">
+                                            <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                                                <i class="fa-solid fa-user text-purple-600"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-end gap-5 mb-1">
+                                                    <div class="font-medium text-gray-700 text-base" contenteditable="true">佐藤 花子</div>
+                                                    <div class="text-gray-400 text-sm" contenteditable="true">1月13日 10:30</div>
+                                                </div>
+                                                <div class="text-gray-700 text-lg leading-relaxed" contenteditable="true">今年もよろしくお願いします！一人ひとりの個性を活かせる職場環境を、みんなで作っていきましょう。</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 右サイドバー -->
+                            <div class="w-96 bg-white border-l border-gray-200 flex flex-col shrink-0">
+                                <!-- PC_mustread: 必読投稿 -->
+                                <div class="m-5 mb-4 bg-white rounded-lg overflow-hidden shadow-sm">
+                                    <div class="bg-white px-5 py-4 flex items-center justify-between border-b border-gray-200">
+                                        <div class="font-bold text-gray-700 text-lg" contenteditable="true">必読投稿</div>
+                                        <div class="flex items-center gap-1 text-gray-600 text-sm cursor-pointer hover:text-gray-800">
+                                            <span contenteditable="true">すべて見る</span>
+                                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                                        </div>
+                                    </div>
+                                    <div class="h-80 bg-orange-400 relative overflow-hidden">
+                                        <div class="absolute inset-0 bg-gradient-to-br from-orange-400 to-orange-600">
+                                            <!-- 吹き出しアイコン -->
+                                            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                                <div class="bg-white rounded-full w-32 h-32 flex items-center justify-center shadow-lg">
+                                                    <i class="fa-solid fa-heart text-red-500 text-4xl"></i>
+                                                </div>
+                                            </div>
+                                            <!-- 小さなユーザーアイコン -->
+                                            <div class="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex gap-2">
+                                                <div class="w-8 h-8 rounded-full bg-white border-2 border-white shadow"></div>
+                                                <div class="w-8 h-8 rounded-full bg-white border-2 border-white shadow"></div>
+                                            </div>
+                                        </div>
+                                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 px-5 py-4">
+                                            <div class="text-white font-bold text-center text-lg" contenteditable="true">今週のベスト投稿</div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white px-5 py-4 flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <span class="bg-red-500 text-white text-xs px-3 py-1.5 rounded font-medium" contenteditable="true">UPDATE</span>
+                                            <span class="text-gray-600 text-sm" contenteditable="true">4月28日</span>
+                                        </div>
+                                        <div class="text-cyan-600 font-bold text-sm cursor-pointer hover:text-cyan-700" contenteditable="true">確認する <i class="fa-solid fa-chevron-right text-xs"></i></div>
+                                    </div>
+                                    <div class="flex justify-center gap-2 pb-4">
+                                        <div class="w-2.5 h-2.5 rounded-full bg-cyan-500"></div>
+                                        <div class="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
+                                        <div class="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- PC_menu: メニュー -->
+                                <div class="mx-5 mb-4 bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-14 h-14 rounded bg-blue-500 flex items-center justify-center shrink-0 shadow-sm">
+                                            <i class="fa-solid fa-envelope text-white text-xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-700 text-base" contenteditable="true">メール</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- PC_notice: お知らせ -->
+                                <div class="flex-1 overflow-y-auto px-5 space-y-3 pb-5">
+                                    <div class="text-gray-500 text-sm font-medium mb-2" contenteditable="true">お知らせ</div>
+                                    <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition">
+                                        <div class="text-sm text-gray-700 mb-1" contenteditable="true">榎本 悠真さんがあなた宛にコメントしました。</div>
+                                        <div class="text-xs text-gray-500" contenteditable="true">23分前</div>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition">
+                                        <div class="text-sm text-gray-700 mb-1" contenteditable="true">高橋 美咲さんがあなた宛にコメントしました。</div>
+                                        <div class="text-xs text-gray-500" contenteditable="true">12月9日 11:14</div>
+                                    </div>
+                                    <div class="pt-2">
+                                        <div class="text-cyan-600 text-sm cursor-pointer hover:text-cyan-700 font-medium" contenteditable="true">もっとみる <i class="fa-solid fa-chevron-right text-xs"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+            if (els.contentHtml) {
+            els.contentHtml.innerHTML = html;
+            }
+        }
+
         // --- 2. Customize (Builder) Logic (Generic Templates) ---
         function applyBuilder(type) {
             state.lastBuilder = type;
@@ -954,27 +1489,167 @@
             if (type === 'timeline') {
                 html = `
                     <div class="${baseClass}">
-                        <div class="h-14 bg-white border-b flex items-center px-4 justify-between shrink-0">
-                            <div class="font-bold text-gray-800" contenteditable="true">タイムライン</div>
-                            <div class="w-8 h-8 rounded-full bg-gray-200"></div>
+                        <!-- PC_header: 共通ヘッダーコンポーネント -->
+                        ${createPCHeader()}
+                        <div class="flex-1 overflow-y-auto bg-gray-50">
+                            <!-- ユーザー情報 -->
+                            <div class="bg-white flex items-center gap-3 px-6 pt-6 pb-2.5">
+                                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-user text-red-500 text-xs"></i>
                         </div>
-                        <div class="flex-1 p-4 space-y-4 overflow-y-auto">
-                            <!-- Generic Post Block -->
-                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <div class="w-10 h-10 rounded-full bg-gray-200"></div>
-                                    <div>
-                                        <div class="font-bold text-sm" contenteditable="true">投稿者名</div>
-                                        <div class="text-xs text-gray-400" contenteditable="true">日付</div>
+                                <div class="flex flex-col">
+                                    <div class="font-bold text-gray-700 text-lg" contenteditable="true">鈴木 一秀</div>
+                                    <div class="text-gray-400 text-sm" contenteditable="true">1月13日 9:21</div>
                                     </div>
-                                    <div class="ml-auto text-xs px-2 py-1 bg-gray-100 rounded" contenteditable="true">カテゴリ</div>
                                 </div>
-                                <div class="text-sm text-gray-700 h-20 border border-dashed border-gray-200 rounded p-2 mb-3" contenteditable="true">
-                                    テキストを入力してください...
+                            
+                            <!-- 注意メッセージ -->
+                            <div class="bg-white px-6 py-4 border-b border-gray-100">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-cyan-500 font-medium text-lg" contenteditable="true">社長メッセージ</span>
+                                    <span class="text-gray-700 font-normal text-lg" contenteditable="true">を公開しました！</span>
                                 </div>
-                                <div class="flex gap-4 text-gray-400 text-sm">
-                                    <span><i class="fa-regular fa-heart"></i></span>
-                                    <span><i class="fa-regular fa-comment"></i></span>
+                            </div>
+                            
+                            <!-- テキストコンテンツ -->
+                            <div class="bg-white px-6 py-4 border-b border-gray-100">
+                                <div class="space-y-3 text-gray-700">
+                                    <p class="text-base leading-relaxed" contenteditable="true">皆さん、おはようございます。</p>
+                                    <p class="text-base leading-relaxed" contenteditable="true">本日は、私が大切にしている「らしく働く」というテーマについて、お話しさせていただきます。</p>
+                                    <p class="text-base leading-relaxed" contenteditable="true">私たちは、一人ひとりが持つ個性や強みを活かしながら、チームとして成果を出していくことが重要だと考えています。</p>
+                                    <p class="text-base leading-relaxed" contenteditable="true">それぞれの「らしさ」を尊重し、お互いを理解し合うことで、より良い職場環境が生まれます。</p>
+                                    <p class="text-base leading-relaxed mt-4" contenteditable="true">今年も、皆さん一人ひとりが「らしく働く」ことができるよう、全力でサポートしていきます。一緒に頑張りましょう！</p>
+                                </div>
+                            </div>
+                            
+                            <!-- メンバー情報 -->
+                            <div class="bg-white px-6 py-4 border-b border-gray-100">
+                                <div class="space-y-4">
+                                    <!-- メンバーカード1 -->
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <div class="flex items-center gap-6">
+                                            <div class="w-18 h-18 rounded-full bg-yellow-100 flex items-center justify-center shrink-0">
+                                                <i class="fa-solid fa-user text-yellow-600"></i>
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <div class="font-bold text-gray-700 text-lg" contenteditable="true">田中 優助</div>
+                                                <div class="text-gray-500 text-sm" contenteditable="true">事業法人 第三部</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- メンバーカード2 -->
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <div class="flex items-center gap-6">
+                                            <div class="w-18 h-18 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                                                <i class="fa-solid fa-user text-green-600"></i>
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <div class="font-bold text-gray-700 text-lg" contenteditable="true">吉川 美紗子</div>
+                                                <div class="text-gray-500 text-sm" contenteditable="true">インサイドセールス部</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 写真 -->
+                            <div class="bg-white px-6 py-6 border-b border-gray-100">
+                                <div class="w-full h-96 bg-gray-200 rounded-xl flex items-center justify-center">
+                                    <i class="fa-solid fa-image text-gray-400 text-4xl"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- カテゴリ -->
+                            <div class="bg-white px-6 py-5 border-b border-gray-100 flex items-center gap-6">
+                                <div class="w-23 h-23 rounded-2xl bg-yellow-400 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-bullhorn text-white text-sm"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <div class="font-bold text-gray-700 text-lg mb-1" contenteditable="true">社長メッセージ</div>
+                                    <div class="text-gray-600 text-base" contenteditable="true">鈴木社長が事業や会社への思いを伝えます🔥</div>
+                                </div>
+                            </div>
+                            
+                            <!-- リアクション -->
+                            <div class="bg-white px-6 py-1 border-b border-gray-100 flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <!-- リアクションボタン -->
+                                    <div class="flex items-center gap-2">
+                                        <div class="border-2 border-cyan-500 rounded-full px-3 py-2 flex items-center">
+                                            <i class="fa-regular fa-heart text-cyan-500 text-sm"></i>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                                <i class="fa-regular fa-face-smile text-gray-500 text-xs"></i>
+                                            </div>
+                                            <span class="text-gray-700 font-bold text-lg">1</span>
+                                        </div>
+                                        <div class="bg-gray-100 rounded-full px-3 py-2">
+                                            <i class="fa-regular fa-comment text-gray-500 text-sm"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <!-- 既読ユーザー -->
+                                    <div class="flex -space-x-2">
+                                        <div class="w-8 h-8 rounded-full bg-red-500 border-2 border-white"></div>
+                                        <div class="w-8 h-8 rounded-full bg-pink-400 border-2 border-white"></div>
+                                        <div class="w-8 h-8 rounded-full bg-green-500 border-2 border-white"></div>
+                                        <div class="w-8 h-8 rounded-full bg-orange-400 border-2 border-white"></div>
+                                        <div class="w-8 h-8 rounded-full bg-blue-400 border-2 border-white"></div>
+                                    </div>
+                                    <span class="text-cyan-500 text-sm" contenteditable="true">既読 <span class="font-bold">31</span>人</span>
+                                </div>
+                            </div>
+                            
+                            <!-- コメント -->
+                            <div class="bg-white">
+                                <!-- コメント1 -->
+                                <div class="px-6 py-6 border-b border-gray-100">
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-1">
+                                            <i class="fa-solid fa-user text-green-600 text-xs"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-end gap-5 mb-1">
+                                                <div class="font-medium text-gray-700 text-base" contenteditable="true">吉川 美紗子</div>
+                                                <div class="text-gray-400 text-sm" contenteditable="true">1月13日 10:01</div>
+                                            </div>
+                                            <div class="text-gray-700 text-lg leading-relaxed" contenteditable="true">"らしく働く"って、抽象的だけど奥深い言葉ですね。<br>チームとしてどう在れるか、考えてみたくなりました！</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- コメント2 -->
+                                <div class="px-6 py-6 border-b border-gray-100">
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-1">
+                                            <i class="fa-solid fa-user text-blue-600 text-xs"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-end gap-5 mb-1">
+                                                <div class="font-medium text-gray-700 text-base" contenteditable="true">山田 太郎</div>
+                                                <div class="text-gray-400 text-sm" contenteditable="true">1月13日 10:15</div>
+                                            </div>
+                                            <div class="text-gray-700 text-lg leading-relaxed" contenteditable="true">社長のメッセージ、とても共感しました。自分らしさを大切にしながら、チームの一員として貢献していきたいです。</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- コメント3 -->
+                                <div class="px-6 py-6">
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-4 h-4 rounded-full bg-purple-100 flex items-center justify-center shrink-0 mt-1">
+                                            <i class="fa-solid fa-user text-purple-600 text-xs"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-end gap-5 mb-1">
+                                                <div class="font-medium text-gray-700 text-base" contenteditable="true">佐藤 花子</div>
+                                                <div class="text-gray-400 text-sm" contenteditable="true">1月13日 10:30</div>
+                                            </div>
+                                            <div class="text-gray-700 text-lg leading-relaxed" contenteditable="true">今年もよろしくお願いします！一人ひとりの個性を活かせる職場環境を、みんなで作っていきましょう。</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1108,6 +1783,10 @@
                         target.style.boxShadow = originalShadow;
                         target.style.backgroundColor = originalBg;
                         target.style.overflow = originalOverflow;
+                        target.style.width = originalWidth;
+                        target.style.height = originalHeight;
+                        // screen-areaのサイズを再計算
+                        updateScreenArea();
                         return;
                     }
                     
@@ -1168,6 +1847,9 @@
                             target.style.width = originalWidth;
                             target.style.height = originalHeight;
                             
+                            // screen-areaのサイズを再計算
+                            updateScreenArea();
+                            
                             // ダウンロード（tainted canvasでもtoDataURLは動作する）
                             try {
                     const link = document.createElement('a');
@@ -1204,11 +1886,8 @@
                             target.style.width = originalWidth;
                             target.style.height = originalHeight;
                             
-                            const screenArea = target.querySelector('#screen-area');
-                            if (screenArea) {
-                                screenArea.style.width = '';
-                                screenArea.style.height = '';
-                            }
+                            // screen-areaのサイズを再計算
+                            updateScreenArea();
                         });
                         }, 50); // レイアウトが確定するまで少し待つ
                     });
