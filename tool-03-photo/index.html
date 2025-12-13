@@ -245,53 +245,17 @@
                 <div id="tab-sticker" class="tab-content hidden animate-fade-in">
                     <!-- サブタブ -->
                     <div class="flex overflow-x-auto bg-amber-50 p-2 gap-2 mb-4 rounded-2xl">
-                        <button onclick="switchStickerSubTab('custom')" class="sticker-subtab-btn active flex-1 py-2 px-3 rounded-xl font-bold text-amber-700/60 hover:bg-amber-100 focus:outline-none whitespace-nowrap transition-all duration-200 text-sm" data-subtab="custom">📁 あなたの画像</button>
-                        <button onclick="switchStickerSubTab('fukidashi')" class="sticker-subtab-btn flex-1 py-2 px-3 rounded-xl font-bold text-amber-700/60 hover:bg-amber-100 focus:outline-none whitespace-nowrap transition-all duration-200 text-sm" data-subtab="fukidashi">💬 吹き出し</button>
+                        <button onclick="switchStickerSubTab('stamp')" class="sticker-subtab-btn active flex-1 py-2 px-3 rounded-xl font-bold text-amber-700/60 hover:bg-amber-100 focus:outline-none whitespace-nowrap transition-all duration-200 text-sm" data-subtab="stamp">🎨 文字スタンプ</button>
                         <button onclick="switchStickerSubTab('emoji')" class="sticker-subtab-btn flex-1 py-2 px-3 rounded-xl font-bold text-amber-700/60 hover:bg-amber-100 focus:outline-none whitespace-nowrap transition-all duration-200 text-sm" data-subtab="emoji">✨ 絵文字</button>
-                        <button onclick="switchStickerSubTab('stamp')" class="sticker-subtab-btn flex-1 py-2 px-3 rounded-xl font-bold text-amber-700/60 hover:bg-amber-100 focus:outline-none whitespace-nowrap transition-all duration-200 text-sm" data-subtab="stamp">🎨 スタンプ</button>
+                        <button onclick="switchStickerSubTab('fukidashi')" class="sticker-subtab-btn flex-1 py-2 px-3 rounded-xl font-bold text-amber-700/60 hover:bg-amber-100 focus:outline-none whitespace-nowrap transition-all duration-200 text-sm" data-subtab="fukidashi">💬 吹き出し</button>
+                        <button onclick="switchStickerSubTab('custom')" class="sticker-subtab-btn flex-1 py-2 px-3 rounded-xl font-bold text-amber-700/60 hover:bg-amber-100 focus:outline-none whitespace-nowrap transition-all duration-200 text-sm" data-subtab="custom">📁 画像アップロード</button>
                     </div>
 
-                    <!-- あなたの画像サブタブ -->
-                    <div id="sticker-subtab-custom" class="sticker-subtab-content block">
-                        <div class="mb-6 p-4 bg-pink-50 rounded-2xl border border-pink-100">
-                            <label class="block text-pink-600 font-bold mb-2 text-sm flex items-center gap-2">
-                                <span>📁</span> 画像をスタンプにする
-                            </label>
-                            <input type="file" id="customStickerInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-pink-100 file:text-pink-600 hover:file:bg-pink-200 cursor-pointer"/>
-                    </div>
-                </div>
-
-                    <!-- 吹き出しサブタブ -->
-                    <div id="sticker-subtab-fukidashi" class="sticker-subtab-content hidden">
-                        <div class="mb-4">
-                            <h4 class="text-sm font-bold text-amber-500 mb-3 ml-1 flex items-center gap-2">
-                                <span>💬</span> 吹き出しの形を選んでね
-                            </h4>
-                            <div class="grid grid-cols-4 gap-3 mb-4" id="fukidashi-shapes">
-                                <!-- 吹き出しの形はJavaScriptで動的に追加 -->
-                            </div>
-                            <!-- 色選択UI（吹き出しを選んだ後に表示） -->
-                            <div id="fukidashi-color-picker" class="hidden bg-amber-50 p-4 rounded-2xl border border-amber-100">
-                                <label class="block text-amber-600 font-bold mb-2 text-sm">色を選んでね</label>
-                                <div class="flex gap-3 overflow-x-auto pb-2">
-                                    <button onclick="selectFukidashiColor('#ffffff')" class="w-10 h-10 rounded-full bg-white border-2 border-gray-200 flex-shrink-0 shadow-sm hover:scale-110 transition"></button>
-                                    <button onclick="selectFukidashiColor('#fef3c7')" class="w-10 h-10 rounded-full bg-yellow-100 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
-                                    <button onclick="selectFukidashiColor('#fcd34d')" class="w-10 h-10 rounded-full bg-yellow-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
-                                    <button onclick="selectFukidashiColor('#f472b6')" class="w-10 h-10 rounded-full bg-pink-400 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
-                                    <button onclick="selectFukidashiColor('#93c5fd')" class="w-10 h-10 rounded-full bg-blue-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
-                                    <button onclick="selectFukidashiColor('#86efac')" class="w-10 h-10 rounded-full bg-green-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
-                                    <button onclick="selectFukidashiColor('#c084fc')" class="w-10 h-10 rounded-full bg-purple-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
-                                    <button onclick="selectFukidashiColor('#fca5a5')" class="w-10 h-10 rounded-full bg-red-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
-                                    <div class="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white bg-white">
-                                        <input type="color" id="fukidashi-custom-color" class="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] p-0 border-0 cursor-pointer opacity-0 z-10" onchange="selectFukidashiColor(this.value)">
-                                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- スタンプサブタブ -->
+                    <div id="sticker-subtab-stamp" class="sticker-subtab-content block">
+                        <h4 class="text-sm font-bold text-gray-400 mb-3 ml-1">スタンプを選んでね</h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" id="stamp-grid">
+                            <!-- スタンプ画像はJavaScriptで動的に追加 -->
                         </div>
                     </div>
 
@@ -410,11 +374,47 @@
                         <p class="text-xs text-gray-400 mt-4 text-center">※Appleの絵文字を画像として商用利用することはできません。社内利用のみにとどめてください。</p>
                 </div>
 
-                    <!-- スタンプサブタブ -->
-                    <div id="sticker-subtab-stamp" class="sticker-subtab-content hidden">
-                        <h4 class="text-sm font-bold text-gray-400 mb-3 ml-1">スタンプを選んでね</h4>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" id="stamp-grid">
-                            <!-- スタンプ画像はJavaScriptで動的に追加 -->
+                    <!-- 吹き出しサブタブ -->
+                    <div id="sticker-subtab-fukidashi" class="sticker-subtab-content hidden">
+                        <div class="mb-4">
+                            <h4 class="text-sm font-bold text-amber-500 mb-3 ml-1 flex items-center gap-2">
+                                <span>💬</span> 吹き出しの形を選んでね
+                            </h4>
+                            <div class="grid grid-cols-4 gap-3 mb-4" id="fukidashi-shapes">
+                                <!-- 吹き出しの形はJavaScriptで動的に追加 -->
+                            </div>
+                            <!-- 色選択UI（吹き出しを選んだ後に表示） -->
+                            <div id="fukidashi-color-picker" class="hidden bg-amber-50 p-4 rounded-2xl border border-amber-100">
+                                <label class="block text-amber-600 font-bold mb-2 text-sm">色を選んでね</label>
+                                <div class="flex gap-3 overflow-x-auto pb-2">
+                                    <button onclick="selectFukidashiColor('#ffffff')" class="w-10 h-10 rounded-full bg-white border-2 border-gray-200 flex-shrink-0 shadow-sm hover:scale-110 transition"></button>
+                                    <button onclick="selectFukidashiColor('#fef3c7')" class="w-10 h-10 rounded-full bg-yellow-100 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                    <button onclick="selectFukidashiColor('#fcd34d')" class="w-10 h-10 rounded-full bg-yellow-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                    <button onclick="selectFukidashiColor('#f472b6')" class="w-10 h-10 rounded-full bg-pink-400 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                    <button onclick="selectFukidashiColor('#93c5fd')" class="w-10 h-10 rounded-full bg-blue-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                    <button onclick="selectFukidashiColor('#86efac')" class="w-10 h-10 rounded-full bg-green-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                    <button onclick="selectFukidashiColor('#c084fc')" class="w-10 h-10 rounded-full bg-purple-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                    <button onclick="selectFukidashiColor('#fca5a5')" class="w-10 h-10 rounded-full bg-red-300 flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white"></button>
+                                    <div class="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0 shadow-sm hover:scale-110 transition border-2 border-white bg-white">
+                                        <input type="color" id="fukidashi-custom-color" class="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] p-0 border-0 cursor-pointer opacity-0 z-10" onchange="selectFukidashiColor(this.value)">
+                                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 画像アップロードサブタブ -->
+                    <div id="sticker-subtab-custom" class="sticker-subtab-content hidden">
+                        <div class="mb-6 p-4 bg-pink-50 rounded-2xl border border-pink-100">
+                            <label class="block text-pink-600 font-bold mb-2 text-sm flex items-center gap-2">
+                                <span>📁</span> 画像をスタンプにする
+                            </label>
+                            <input type="file" id="customStickerInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-pink-100 file:text-pink-600 hover:file:bg-pink-200 cursor-pointer"/>
                         </div>
                     </div>
                 </div>
@@ -1348,7 +1348,7 @@
             
             // スタンプタブが開かれたとき、最初のサブタブを表示
             if (tabName === 'sticker') {
-                switchStickerSubTab('custom');
+                switchStickerSubTab('stamp');
             }
         }
 
