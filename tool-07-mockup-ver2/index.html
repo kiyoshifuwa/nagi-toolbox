@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUNAG タイムライン - 社長メッセージ</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- html2canvas for image download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tunag: {
+                            blue: '#00AAC2',
+                            'blue-dark': '#0090A9',
+                            orange: '#FF9500',
+                            danger: '#D1204D',
+                        },
+                        neutral: {
+                            '600': '#414D58',
+                            '500': '#515A61',
+                            '400': '#9197A3',
+                            '300': '#A1A6AB',
+                            '200': '#C7D4DE',
+                            '100': '#E1E8EE',
+                            '50': '#F5F6F7',
+                        },
+                        gray: {
+                            '900': '#283E59',
+                        }
+                    },
+                    fontFamily: {
+                        'hiragino': ['"Hiragino Kaku Gothic ProN"', 'sans-serif'],
+                        'hiragino-sans': ['"Hiragino Sans"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', sans-serif;
+            background-color: #ECEFF0;
+        }
+        
+        /* カスタムフォントウェイト */
+        .font-w3 {
+            font-weight: 300;
+        }
+        .font-w4 {
+            font-weight: 400;
+        }
+        .font-w6 {
+            font-weight: 600;
+        }
+        
+        /* プロフィールアイコンの円形マスク */
+        .profile-icon {
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        /* 編集可能なテキストのスタイル */
+        [contenteditable="true"] {
+            outline: none;
+            cursor: text;
+            transition: all 0.2s;
+        }
+        
+        [contenteditable="true"]:hover {
+            outline: 1px dashed #00AAC2;
+            background-color: rgba(0, 170, 194, 0.05);
+            border-radius: 2px;
+        }
+        
+        [contenteditable="true"]:focus {
+            outline: 2px solid #00AAC2;
+            background-color: rgba(0, 170, 194, 0.1);
+            border-radius: 2px;
+        }
+        
+        /* ダウンロードボタン */
+        .download-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            background: #00AAC2;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .download-btn:hover {
+            background: #0090A9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-neutral-50">
+    <div class="relative w-full min-h-screen">
+        <!-- 背景装飾 -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <img src="http://localhost:3845/assets/1c23d93b32a71fd1360df8a88ef51c257a2a8ee6.png" 
+                 alt="" 
+                 class="absolute top-0 left-0 w-full h-full object-cover opacity-5"
+                 style="width: 2337px; height: 1426px; left: -3px;">
+        </div>
+        
+        <!-- メインコンテンツ -->
+        <div class="relative bg-neutral-50 min-h-screen">
+            <!-- ヘッダー -->
+            <header class="bg-tunag-blue w-full px-[132px] py-4 flex items-center justify-between">
+                <!-- ロゴ -->
+                <div class="h-[40px] w-[205px] relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-[20%] h-full relative">
+                            <div class="absolute inset-0 bg-white rounded"></div>
+                        </div>
+                        <div class="ml-2 text-white text-xl font-w6">TUNAG</div>
+                    </div>
+                </div>
+                
+                <!-- ナビゲーション -->
+                <div class="flex items-center gap-12">
+                    <nav class="flex items-center gap-12">
+                        <a href="#" class="flex items-center gap-3 text-white font-w6 text-lg hover:opacity-80">
+                            <i class="fas fa-home text-xl"></i>
+                            <span>タイムライン</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 text-white font-w6 text-lg hover:opacity-80">
+                            <i class="fas fa-comments text-xl"></i>
+                            <span>チャット</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 text-white font-w6 text-lg hover:opacity-80">
+                            <i class="fas fa-book text-xl"></i>
+                            <span>制度</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 text-white font-w6 text-lg hover:opacity-80">
+                            <i class="fas fa-users text-xl"></i>
+                            <span>組織</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 text-white font-w6 text-lg hover:opacity-80">
+                            <i class="fas fa-th-large text-xl"></i>
+                            <span>ポータル</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 text-white font-w6 text-lg hover:opacity-80">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span>お知らせ</span>
+                        </a>
+                    </nav>
+                    
+                    <!-- 検索とプロフィール -->
+                    <div class="flex items-center gap-4">
+                        <i class="fas fa-search text-white text-xl cursor-pointer hover:opacity-80"></i>
+                        <div class="flex items-center gap-3 cursor-pointer">
+                            <div class="w-4 h-4 profile-icon bg-blue-300"></div>
+                            <i class="fas fa-chevron-down text-white text-sm rotate-180"></i>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- メインコンテンツエリア -->
+            <div class="container mx-auto px-[211px] py-7">
+                <div class="flex gap-8 items-start">
+                    <!-- 左サイドバー -->
+                    <div class="flex flex-col gap-6 w-[430px] flex-shrink-0">
+                        <!-- プロフィールカード -->
+                        <div class="bg-white rounded-lg overflow-hidden shadow-sm relative h-[371px]">
+                            <!-- 背景画像 -->
+                            <div class="h-[260px] bg-gradient-to-br from-blue-200 to-purple-200 relative overflow-hidden">
+                                <img src="http://localhost:3845/assets/ff460979fa7a3e62ca395705ff99d0da88c229d8.png" 
+                                     alt="" 
+                                     class="absolute inset-0 w-full h-full object-cover">
+                            </div>
+                            
+                            <!-- プロフィールアイコン -->
+                            <div class="absolute top-[199px] left-[15px] w-[87px] h-[87px] profile-icon border-4 border-white shadow-md">
+                                <div class="w-full h-full bg-blue-200"></div>
+                            </div>
+                            
+                            <!-- ユーザー情報 -->
+                            <div class="pt-12 px-4 pb-4">
+                                <h3 class="font-w6 text-neutral-500 text-lg mb-2" contenteditable="true">佐藤 陽菜</h3>
+                                <div class="text-neutral-300 text-sm font-w3 space-y-1">
+                                    <p contenteditable="true">株式会社スタメン／人事部</p>
+                                    <p contenteditable="true">採用グループ</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ポイントカード -->
+                        <div class="bg-white rounded-lg p-6 shadow-sm">
+                            <dl class="flex items-center justify-between">
+                                <dt class="font-w3 text-neutral-500 text-lg" contenteditable="true">現在のポイント</dt>
+                                <dd class="text-tunag-blue font-bold text-2xl">
+                                    <span contenteditable="true">125</span> <span class="text-lg" contenteditable="true">pt⭐</span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                    
+                    <!-- 中央コンテンツ -->
+                    <div class="flex-1 bg-white rounded-lg overflow-hidden shadow-sm">
+                        <!-- 投稿ヘッダー -->
+                        <div class="px-6 pt-6 pb-4 border-b border-neutral-100">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-8 h-8 profile-icon bg-red-300"></div>
+                                <div>
+                                    <p class="font-w6 text-neutral-500 text-lg" contenteditable="true">鈴木 一秀</p>
+                                    <p class="font-w3 text-neutral-200 text-sm" contenteditable="true">1月13日 9:21</p>
+                                </div>
+                            </div>
+                            
+                            <!-- お知らせバナー -->
+                            <div class="flex items-center gap-2 py-4">
+                                <span class="text-tunag-blue font-w3 text-xl" contenteditable="true">社長メッセージ</span>
+                                <span class="text-neutral-500 font-w3 text-xl" contenteditable="true">を公開しました！</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 投稿タイトル -->
+                        <div class="px-6 pt-3">
+                            <h2 class="font-w6 text-neutral-500 text-xl mb-2" contenteditable="true">タイトル</h2>
+                            <p class="font-w3 text-neutral-500 text-lg mb-4" contenteditable="true">"らしさ" を大事にできる組織へ</p>
+                        </div>
+                        
+                        <!-- 投稿内容 -->
+                        <div class="px-6 pb-6">
+                            <h3 class="font-w6 text-neutral-500 text-xl mb-2" contenteditable="true">内容</h3>
+                            <h4 class="font-w6 text-neutral-500 text-xl mb-2 pb-2 border-b border-neutral-100" contenteditable="true">チームの力になるために</h4>
+                            
+                            <div class="mt-2 mb-6">
+                                <p class="font-w4 text-neutral-500 text-lg leading-relaxed mb-4" contenteditable="true">
+                                    最近、外部の方から「御社は社員の方がとてもイキイキしていますね」と言っていただく機会がありました。嬉しい反面、「それってなんでだろう？」と改めて考えさせられました。
+                                </p>
+                                <p class="font-w4 text-neutral-500 text-lg leading-relaxed mb-4" contenteditable="true">
+                                    答えのひとつは「自分らしく働けているか」という点だと思っています。
+                                </p>
+                                <p class="font-w4 text-neutral-500 text-lg leading-relaxed mb-4" contenteditable="true">
+                                    評価されるため、正解を探すためだけに働くと、どこか息苦しさが生ま
+                                </p>
+                                
+                                <!-- もっと見る -->
+                                <div class="flex items-center gap-4 mt-6 cursor-pointer group">
+                                    <i class="fas fa-chevron-down text-tunag-blue text-lg"></i>
+                                    <span class="text-tunag-blue font-w3 text-lg group-hover:underline" contenteditable="true">もっと見る</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 関連するメンバー -->
+                            <div class="mb-6">
+                                <h3 class="font-w6 text-neutral-500 text-xl mb-3" contenteditable="true">関連するメンバー</h3>
+                                <div class="space-y-3">
+                                    <!-- メンバー1 -->
+                                    <div class="border border-neutral-100 rounded-lg p-4">
+                                        <div class="flex items-center gap-6">
+                                            <div class="w-[71px] h-[71px] profile-icon bg-yellow-200"></div>
+                                            <div>
+                                                <p class="font-w6 text-neutral-600 text-lg" contenteditable="true">田中 優助</p>
+                                                <p class="font-w3 text-neutral-400 text-sm" contenteditable="true">事業法人 第三部</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- メンバー2 -->
+                                    <div class="border border-neutral-100 rounded-lg p-4">
+                                        <div class="flex items-center gap-6">
+                                            <div class="w-[71px] h-[71px] profile-icon bg-green-200"></div>
+                                            <div>
+                                                <p class="font-w6 text-neutral-600 text-lg" contenteditable="true">吉川 美紗子</p>
+                                                <p class="font-w3 text-neutral-400 text-sm" contenteditable="true">インサイドセールス部</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 画像 -->
+                            <div class="mb-6">
+                                <div class="w-full h-[442px] rounded-lg overflow-hidden bg-neutral-100">
+                                    <img src="http://localhost:3845/assets/1449a267ecda3cdaea475f7c62a9f629dd30bacd.png" 
+                                         alt="投稿画像" 
+                                         class="w-full h-full object-cover">
+                                </div>
+                            </div>
+                            
+                            <!-- カテゴリー -->
+                            <div class="border-t border-neutral-100 py-5 px-6 -mx-6">
+                                <div class="flex items-center gap-6">
+                                    <div class="w-[91px] h-[91px] bg-yellow-400 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-bullhorn text-white text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-w6 text-neutral-500 text-lg mb-1" contenteditable="true">社長メッセージ</h4>
+                                        <p class="font-w3 text-neutral-500 text-base" contenteditable="true">鈴木社長が事業や会社への思いを伝えます🔥</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- リアクション -->
+                            <div class="border-t border-neutral-100 py-2 px-6 -mx-6 flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-12 h-12 border-2 border-tunag-blue rounded-full flex items-center justify-center">
+                                            <i class="fas fa-heart text-tunag-blue text-lg"></i>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <img src="http://localhost:3845/assets/f8fe1bb6078b7e1ae511aa5ab2cc13a2a6985b.png" 
+                                                 alt="リアクション" 
+                                                 class="w-9 h-9">
+                                            <span class="text-neutral-500 font-bold text-lg">1</span>
+                                        </div>
+                                    </div>
+                                    <button class="bg-neutral-50 rounded-full w-[53px] h-[46px] flex items-center justify-center hover:bg-neutral-100 transition-colors">
+                                        <i class="fas fa-smile text-neutral-400 text-xl"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex -space-x-2">
+                                        <div class="w-8 h-8 rounded-full bg-red-300 border-2 border-white"></div>
+                                        <div class="w-8 h-8 rounded-full bg-pink-300 border-2 border-white"></div>
+                                        <div class="w-8 h-8 rounded-full bg-green-300 border-2 border-white"></div>
+                                        <div class="w-8 h-8 rounded-full bg-orange-300 border-2 border-white"></div>
+                                        <div class="w-8 h-8 rounded-full bg-blue-300 border-2 border-white"></div>
+                                    </div>
+                                            <span class="text-tunag-blue font-w3 text-sm ml-2">
+                                        既読 <span class="font-bold" contenteditable="true">31</span>人
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- コメントセクション -->
+                        <div class="bg-neutral-50 border-t border-neutral-100">
+                            <!-- コメント入力 -->
+                            <div class="px-6 py-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-[14px] h-[14px] profile-icon bg-blue-200 flex-shrink-0"></div>
+                                    <div class="flex-1">
+                                        <div class="bg-white border border-neutral-300 rounded-lg p-3 flex items-center justify-between mb-3">
+                                            <input type="text" 
+                                                   placeholder="コメントする" 
+                                                   class="flex-1 outline-none text-neutral-400 font-w3 text-lg">
+                                            <div class="flex items-center gap-4">
+                                                <i class="fas fa-image text-neutral-300 text-xl cursor-pointer"></i>
+                                                <i class="fas fa-smile text-neutral-300 text-xl cursor-pointer"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-4">
+                                                <i class="fas fa-smile text-neutral-300 text-xl cursor-pointer"></i>
+                                                <i class="fas fa-image text-neutral-300 text-xl cursor-pointer"></i>
+                                                <i class="fas fa-paperclip text-neutral-300 text-xl cursor-pointer"></i>
+                                                <i class="fas fa-link text-neutral-300 text-xl cursor-pointer"></i>
+                                            </div>
+                                            <i class="fas fa-paper-plane text-neutral-300 text-xl cursor-pointer"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 既存のコメント -->
+                            <div class="px-6 pb-6 space-y-4">
+                                <!-- コメント1 -->
+                                <div class="flex items-start gap-3 pt-6">
+                                    <div class="w-[14px] h-[14px] profile-icon bg-green-200 flex-shrink-0"></div>
+                                    <div class="flex-1">
+                                        <div class="flex items-end gap-5 mb-2">
+                                            <p class="font-w6 text-neutral-500 text-lg" contenteditable="true">吉川 美紗子</p>
+                                            <p class="font-w3 text-neutral-200 text-sm" contenteditable="true">1月13日 10:01</p>
+                                        </div>
+                                        <p class="font-w3 text-neutral-500 text-lg leading-relaxed" contenteditable="true">
+                                            "らしく働く"って、抽象的だけど奥深い言葉ですね。<br>
+                                            チームとしてどう在れるか、考えてみたくなりました！
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <!-- コメント2 -->
+                                <div class="flex items-start gap-3 pt-6">
+                                    <div class="w-[14px] h-[14px] profile-icon bg-blue-200 flex-shrink-0"></div>
+                                    <div class="flex-1">
+                                        <div class="flex items-end gap-5 mb-2">
+                                            <p class="font-w6 text-neutral-500 text-lg" contenteditable="true">佐藤 陽菜</p>
+                                            <p class="font-w3 text-neutral-200 text-sm" contenteditable="true">1月13日 10:52</p>
+                                        </div>
+                                        <p class="font-w3 text-neutral-500 text-lg leading-relaxed" contenteditable="true">
+                                            投稿ありがとうございます！<br>
+                                            「正解を探すためだけに働くと息苦しい」って言葉に共感です。<br>
+                                            前向きな気持ちで考えてみます！
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 右サイドバー -->
+                    <div class="flex flex-col gap-6 w-[430px] flex-shrink-0">
+                        <!-- 必読投稿 -->
+                        <div class="bg-white rounded-lg overflow-hidden shadow-sm">
+                            <!-- ヘッダー -->
+                            <div class="bg-white px-6 py-3 flex items-center justify-between border-b border-neutral-100">
+                                <h3 class="font-w6 text-neutral-600 text-xl" contenteditable="true">必読投稿</h3>
+                                <a href="#" class="flex items-center gap-2 text-neutral-600 font-w3 text-lg hover:text-tunag-blue transition-colors">
+                                    <span contenteditable="true">すべて見る</span>
+                                    <i class="fas fa-chevron-right text-sm"></i>
+                                </a>
+                            </div>
+                            
+                            <!-- 画像 -->
+                            <div class="h-[323px] bg-tunag-orange relative overflow-hidden">
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="text-center text-white">
+                                        <i class="fas fa-comment-dots text-6xl mb-4"></i>
+                                        <p class="font-w6 text-xl" contenteditable="true">今週のベスト投稿</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- フッター -->
+                            <div class="bg-white px-6 py-3 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="bg-tunag-danger text-white text-xs px-2 py-1 rounded font-w3" contenteditable="true">UPDATE</span>
+                                    <span class="font-w3 text-neutral-500 text-lg" contenteditable="true">4月28日</span>
+                                </div>
+                                <a href="#" class="flex items-center gap-2 text-tunag-blue-dark font-w6 text-lg hover:underline">
+                                    <span contenteditable="true">確認する</span>
+                                    <i class="fas fa-chevron-right text-sm"></i>
+                                </a>
+                            </div>
+                            
+                            <!-- ドットインジケーター -->
+                            <div class="flex items-center justify-center gap-1 py-3">
+                                <div class="w-2 h-2 rounded-full bg-tunag-blue"></div>
+                                <div class="w-2 h-2 rounded-full bg-neutral-200"></div>
+                                <div class="w-2 h-2 rounded-full bg-neutral-200"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- メニュー -->
+                        <div class="bg-white rounded-lg p-6 shadow-sm">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-blue-500 rounded flex items-center justify-center">
+                                    <i class="fas fa-envelope text-white text-xl"></i>
+                                </div>
+                                <span class="font-w3 text-neutral-500 text-lg" contenteditable="true">メール</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ダウンロードボタン -->
+        <button onclick="downloadImage()" class="download-btn">
+            <i class="fas fa-download"></i>
+            画像をダウンロード
+        </button>
+    </div>
+    
+    <script>
+        // 画像ダウンロード機能
+        async function downloadImage() {
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
+            button.disabled = true;
+            
+            try {
+                // ダウンロードボタンを一時的に非表示
+                button.style.display = 'none';
+                
+                // メインコンテンツエリアを取得
+                const element = document.querySelector('.relative.bg-neutral-50.min-h-screen');
+                
+                // html2canvasで画像を生成
+                const canvas = await html2canvas(element, {
+                    backgroundColor: '#ECEFF0',
+                    scale: 2,
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: false,
+                    windowWidth: element.scrollWidth,
+                    windowHeight: element.scrollHeight
+                });
+                
+                // 画像をダウンロード
+                const link = document.createElement('a');
+                link.download = `tunag-mockup-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+            } catch (error) {
+                console.error('画像生成エラー:', error);
+                alert('画像の生成に失敗しました。もう一度お試しください。');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                button.style.display = 'flex';
+            }
+        }
+        
+        // contenteditable要素の改行を適切に処理
+        document.addEventListener('keydown', function(e) {
+            if (e.target.hasAttribute('contenteditable')) {
+                // Enterキーで改行を許可
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    document.execCommand('insertLineBreak');
+                }
+            }
+        });
+        
+        // contenteditable要素からフォーカスが外れたときに空のテキストを防ぐ
+        document.addEventListener('blur', function(e) {
+            if (e.target.hasAttribute('contenteditable') && !e.target.textContent.trim()) {
+                e.target.textContent = e.target.getAttribute('data-placeholder') || '';
+            }
+        }, true);
+    </script>
+</body>
+</html>
+
